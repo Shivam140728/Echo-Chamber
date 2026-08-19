@@ -6,20 +6,29 @@
   <title>Undercover Game</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    body { background: #0f172a; color: #f8fafc; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
-    .card { background: #1e293b; border-radius: 16px; padding: 24px; width: 100%; max-width: 420px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 1px solid #334155; }
-    h1, h2 { text-align: center; margin-bottom: 20px; color: #38bdf8; }
-    input, button { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 8px; border: none; font-size: 16px; }
-    input { background: #334155; color: white; border: 1px solid #475569; }
+    body { background: #0f172a; color: #f8fafc; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 16px; }
+    .card { background: #1e293b; border-radius: 16px; padding: 24px; width: 100%; max-width: 450px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 1px solid #334155; }
+    h1, h2, h3 { text-align: center; margin-bottom: 16px; color: #38bdf8; }
+    input, button, select { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 8px; border: none; font-size: 16px; }
+    input, select { background: #334155; color: white; border: 1px solid #475569; }
     button { background: #0284c7; color: white; font-weight: bold; cursor: pointer; transition: 0.2s; }
     button:hover { background: #0369a1; }
     .secondary-btn { background: #475569; }
-    .secondary-btn:hover { background: #334155; }
     .hidden { display: none !important; }
     ul { list-style: none; margin-bottom: 16px; }
     li { background: #334155; padding: 10px; border-radius: 6px; margin-bottom: 8px; display: flex; justify-content: space-between; }
-    .secret-box { background: #0284c7; padding: 20px; text-align: center; border-radius: 12px; margin-bottom: 20px; font-weight: bold; font-size: 20px; }
-    .active-turn { border: 2px solid #38bdf8; background: #0284c7; }
+    .secret-box { background: #0284c7; padding: 18px; text-align: center; border-radius: 12px; margin-bottom: 16px; font-weight: bold; font-size: 18px; user-select: none; cursor: pointer; }
+    .active-turn { border: 2px solid #38bdf8; background: #0369a1; }
+    
+    /* Chat Panel Styles */
+    .chat-box { background: #0f172a; border-radius: 8px; border: 1px solid #334155; height: 140px; overflow-y: auto; padding: 10px; margin-bottom: 8px; display: flex; flex-direction: column; gap: 6px; }
+    .chat-msg { font-size: 14px; background: #1e293b; padding: 6px 10px; border-radius: 6px; }
+    .chat-msg .sender { color: #38bdf8; font-weight: bold; }
+    .chat-input-group { display: flex; gap: 8px; }
+    .chat-input-group input { margin-bottom: 0; }
+    .chat-input-group button { width: 30%; margin-bottom: 0; }
+    .config-group { background: #0f172a; padding: 12px; border-radius: 8px; margin-bottom: 16px; border: 1px solid #334155; }
+    .config-group label { display: block; margin-bottom: 6px; font-size: 14px; color: #94a3b8; }
   </style>
 </head>
 <body>
@@ -27,41 +36,79 @@
   <div class="card">
     <h1>🕵️ UNDERCOVER</h1>
 
-    <!-- VIEW 1: AUTH / JOIN -->
+    <!-- VIEW 1: JOIN OR CREATE ROOM -->
     <div id="auth-view">
-      <input type="text" id="username" placeholder="Your Nickname">
-      <button onclick="createRoom()">Create New Game</button>
-      <input type="text" id="room-code-input" placeholder="Room Code (e.g. ABCD)">
-      <button class="secondary-btn" onclick="joinRoom()">Join Game</button>
+      <input type="text" id="username" placeholder="Enter Nickname">
+      <button onclick="createRoom()">Create New Room</button>
+      <input type="text" id="room-code-input" placeholder="Enter Room Code (e.g. ABCD)">
+      <button class="secondary-btn" onclick="joinRoom()">Join Room</button>
     </div>
 
-    <!-- VIEW 2: LOBBY -->
+    <!-- VIEW 2: LOBBY & GAME SETUP -->
     <div id="lobby-view" class="hidden">
       <h2>Room Code: <span id="display-room-code" style="color:#f59e0b"></span></h2>
+      
+      <!-- HOST CONFIG SETUP -->
+      <div id="host-config" class="config-group hidden">
+        <label>Undercover Count:</label>
+        <select id="config-undercover" onchange="updateConfig()">
+          <option value="1">1 Undercover</option>
+          <option value="2">2 Undercovers</option>
+          <option value="3">3 Undercovers</option>
+        </select>
+        
+        <label>Include Mr. White:</label>
+        <select id="config-mrwhite" onchange="updateConfig()">
+          <option value="true">Yes</option>
+          <option value="false">No</option>
+        </select>
+      </div>
+
+      <h3>Players in Room</h3>
       <ul id="player-list"></ul>
+
       <button id="start-btn" class="hidden" onclick="startGame()">Start Game</button>
-      <p id="waiting-msg" style="text-align: center; color: #94a3b8;">Waiting for host to start...</p>
+      <p id="waiting-msg" style="text-align: center; color: #94a3b8; margin-bottom: 12px;">Waiting for host to start...</p>
+      
+      <!-- REAL-TIME MESSAGING -->
+      <h3>Room Chat</h3>
+      <div class="chat-box" id="lobby-chat"></div>
+      <div class="chat-input-group">
+        <input type="text" id="chat-input" placeholder="Type a message...">
+        <button onclick="sendChatMessage()">Send</button>
+      </div>
     </div>
 
     <!-- VIEW 3: GAMEPLAY -->
     <div id="game-view" class="hidden">
-      <div id="secret-word-card" class="secret-box">Tap to reveal secret word</div>
-      <h2>Turn Order</h2>
+      <div id="secret-word-card" class="secret-box">🔒 Hold to reveal secret word</div>
+      <h3>Turn Order</h3>
       <ul id="turn-list"></ul>
       <button id="next-turn-btn" onclick="nextTurn()">Next Player Clue</button>
     </div>
 
     <!-- VIEW 4: VOTING -->
     <div id="voting-view" class="hidden">
-      <h2>Vote to Eliminate</h2>
+      <h2>Vote to Eliminate Suspect</h2>
       <div id="vote-buttons"></div>
     </div>
 
-    <!-- VIEW 5: GAME OVER -->
+    <!-- VIEW 5: MR. WHITE GUESS WORD -->
+    <div id="mrwhite-view" class="hidden">
+      <h2>❓ Mr. White Guess Phase</h2>
+      <p id="mrwhite-status" style="text-align: center; margin-bottom: 12px;"></p>
+      <div id="mrwhite-input-container" class="hidden">
+        <input type="text" id="mrwhite-guess-input" placeholder="Guess Civilians' Word...">
+        <button onclick="submitMrWhiteGuess()">Submit Word Guess</button>
+      </div>
+    </div>
+
+    <!-- VIEW 6: GAME OVER -->
     <div id="gameover-view" class="hidden">
       <h2 id="winner-text"></h2>
+      <p id="word-reveal-text" style="text-align: center; margin-bottom: 10px; color: #38bdf8;"></p>
       <p id="eliminated-text" style="text-align: center; margin-bottom: 15px;"></p>
-      <button onclick="location.reload()">Back to Lobby</button>
+      <button onclick="location.reload()">Back to Main Menu</button>
     </div>
 
   </div>

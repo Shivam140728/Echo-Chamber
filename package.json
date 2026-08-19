@@ -1,7 +1,7 @@
 {
   "name": "undercover-game",
   "version": "1.0.0",
-  "description": "Full-stack real-time Undercover social deduction game",
+  "description": "Undercover social deduction game with chat and Mr. White guessing",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"

@@ -4,19 +4,20 @@ let currentRoomCode = null;
 let myPlayerId = null;
 let mySecretWord = null;
 
-// UI View Elements
+// Views
 const authView = document.getElementById('auth-view');
 const lobbyView = document.getElementById('lobby-view');
 const gameView = document.getElementById('game-view');
 const votingView = document.getElementById('voting-view');
+const mrwhiteView = document.getElementById('mrwhite-view');
 const gameoverView = document.getElementById('gameover-view');
 
 function showView(view) {
-  [authView, lobbyView, gameView, votingView, gameoverView].forEach(v => v.classList.add('hidden'));
+  [authView, lobbyView, gameView, votingView, mrwhiteView, gameoverView].forEach(v => v.classList.add('hidden'));
   view.classList.remove('hidden');
 }
 
-// User Actions
+// Room Actions
 function createRoom() {
   const username = document.getElementById('username').value.trim();
   if (!username) return alert('Enter nickname');
@@ -30,6 +31,20 @@ function joinRoom() {
   socket.emit('joinRoom', { username, roomCode });
 }
 
+function sendChatMessage() {
+  const input = document.getElementById('chat-input');
+  const message = input.value.trim();
+  if (!message) return;
+  socket.emit('sendMessage', { roomCode: currentRoomCode, message });
+  input.value = '';
+}
+
+function updateConfig() {
+  const undercoverCount = document.getElementById('config-undercover').value;
+  const includeMrWhite = document.getElementById('config-mrwhite').value === 'true';
+  socket.emit('updateConfig', { roomCode: currentRoomCode, undercoverCount, includeMrWhite });
+}
+
 function startGame() {
   socket.emit('startGame', { roomCode: currentRoomCode });
 }
@@ -40,10 +55,16 @@ function nextTurn() {
 
 function submitVote(targetId) {
   socket.emit('submitVote', { roomCode: currentRoomCode, targetId });
-  document.getElementById('vote-buttons').innerHTML = `<p style="text-align:center">Vote registered. Waiting for others...</p>`;
+  document.getElementById('vote-buttons').innerHTML = `<p style="text-align:center; color:#94a3b8;">Vote registered. Waiting for others...</p>`;
 }
 
-// Socket Receivers
+function submitMrWhiteGuess() {
+  const guessedWord = document.getElementById('mrwhite-guess-input').value.trim();
+  if (!guessedWord) return alert('Enter a guess!');
+  socket.emit('submitMrWhiteGuess', { roomCode: currentRoomCode, guessedWord });
+}
+
+// Socket Events
 socket.on('roomCreated', ({ roomCode, playerId }) => {
   currentRoomCode = roomCode;
   myPlayerId = playerId;
@@ -61,10 +82,22 @@ socket.on('roomJoined', ({ roomCode, playerId }) => {
 socket.on('updateRoom', (room) => {
   const list = document.getElementById('player-list');
   list.innerHTML = room.players.map(p => `<li>${p.name} ${p.id === room.host ? '👑 Host' : ''}</li>`).join('');
+  
   if (room.host === myPlayerId) {
+    document.getElementById('host-config').classList.remove('hidden');
     document.getElementById('start-btn').classList.remove('hidden');
     document.getElementById('waiting-msg').classList.add('hidden');
+  } else {
+    document.getElementById('host-config').classList.add('hidden');
+    document.getElementById('start-btn').classList.add('hidden');
+    document.getElementById('waiting-msg').classList.remove('hidden');
   }
+});
+
+socket.on('newMessage', (msg) => {
+  const chatBox = document.getElementById('lobby-chat');
+  chatBox.innerHTML += `<div class="chat-msg"><span class="sender">${msg.sender}:</span> ${msg.text}</div>`;
+  chatBox.scrollTop = chatBox.scrollHeight;
 });
 
 socket.on('gameStarted', (room) => {
@@ -74,7 +107,6 @@ socket.on('gameStarted', (room) => {
 
   const secretCard = document.getElementById('secret-word-card');
   secretCard.innerText = "🔒 Hold to reveal Secret Word";
-  
   secretCard.onmousedown = secretCard.ontouchstart = () => secretCard.innerText = `YOUR WORD: ${mySecretWord}`;
   secretCard.onmouseup = secretCard.ontouchend = () => secretCard.innerText = "🔒 Hold to reveal Secret Word";
 
@@ -106,16 +138,31 @@ socket.on('startVoting', (room) => {
   `).join('');
 });
 
+socket.on('mrWhiteGuessPhase', ({ mrWhiteId, mrWhiteName }) => {
+  showView(mrwhiteView);
+  const status = document.getElementById('mrwhite-status');
+  const container = document.getElementById('mrwhite-input-container');
+
+  if (myPlayerId === mrWhiteId) {
+    status.innerText = "You were voted out as Mr. White! Guess the Civilian word to win!";
+    container.classList.remove('hidden');
+  } else {
+    status.innerText = `${mrWhiteName} was Mr. White! They are currently trying to guess the Civilian word...`;
+    container.classList.add('hidden');
+  }
+});
+
 socket.on('roundContinued', ({ eliminated, room }) => {
   alert(`${eliminated.name} was voted out!`);
   showView(gameView);
   renderTurns(room);
 });
 
-socket.on('gameOver', ({ winner, eliminated, room }) => {
+socket.on('gameOver', ({ winner, eliminated, civiliansWord }) => {
   showView(gameoverView);
-  document.getElementById('winner-text').innerText = `🏆 ${winner} WIN!`;
-  document.getElementById('eliminated-text').innerText = `Final eliminated: ${eliminated.name} (${eliminated.role})`;
+  document.getElementById('winner-text').innerText = `🏆 ${winner}`;
+  document.getElementById('word-reveal-text').innerText = `Civilian Word was: ${civiliansWord}`;
+  document.getElementById('eliminated-text').innerText = eliminated ? `Last eliminated: ${eliminated.name} (${eliminated.role})` : '';
 });
 
 socket.on('errorMsg', (msg) => alert(msg));
