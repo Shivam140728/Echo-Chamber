@@ -12,27 +12,33 @@ app.use(express.static('public'));
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "YOUR_API_KEY_HERE");
 
 const fallbackCategories = [
-  { civilian: "Tiger", undercover: "Lion" },
-  { civilian: "Coffee", undercover: "Tea" },
-  { civilian: "Laptop", undercover: "Tablet" },
-  { civilian: "Beach", undercover: "Desert" },
-  { civilian: "Pizza", undercover: "Burger" }
+  { civilian: "SHOWER", undercover: "BATH" },
+  { civilian: "COFFEE", undercover: "TEA" },
+  { civilian: "PIZZA", undercover: "BURGER" },
+  { civilian: "LAPTOP", undercover: "TABLET" },
+  { civilian: "BEACH", undercover: "DESERT" }
 ];
 
 let usedWordPairs = [];
 
 let gameState = {
   players: {},
-  phase: 'lobby',
+  groups: {
+    "V5": { name: "V5", color: "#ff5e5e", players: ["Shivam", "Sneha", "Mahima", "Dhanush", "Anand"] }
+  },
+  activeGroup: null,
+  phase: 'home', // 'home', 'lobby', 'groups', 'editGroup', 'cards', 'describing', 'voting', 'mrWhiteGuess', 'ended'
   round: 1,
   turnIndex: 0,
   playerOrder: [],
+  cardsPicked: {},
   clues: {},
   votes: {},
   settings: {
     noRepeat: true,
     undercoverCount: 1,
-    mrWhiteCount: 1
+    mrWhiteCount: 1,
+    wordPack: "Standard"
   },
   currentPair: { civilian: "", undercover: "" },
   winnerMessage: ""
@@ -42,7 +48,7 @@ async function getAIWordPair() {
   try {
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     const response = await model.generateContent(
-      'Generate a pair of closely related words for a word-imposter party game. One is the "civilian" word, and the other is a distinct yet closely related "undercover" word. Return ONLY valid JSON format like this: {"civilian": "Word1", "undercover": "Word2"}'
+      'Generate a pair of closely related words for a word-imposter party game in UPPERCASE. One "civilian" word, one "undercover" word. Return ONLY valid JSON: {"civilian": "WORD1", "undercover": "WORD2"}'
     );
     let text = response.response.text().trim().replace(/```json/g, '').replace(/```/g, '').trim();
     const parsed = JSON.parse(text);
@@ -56,28 +62,40 @@ async function getAIWordPair() {
 io.on('connection', (socket) => {
   console.log(`User connected: ${socket.id}`);
 
-  socket.on('joinGame', (name) => {
-    if (gameState.phase !== 'lobby') {
-      socket.emit('errorMsg', 'Game already in progress!');
-      return;
+  socket.on('joinLobby', () => {
+    socket.emit('updateState', gameState);
+  });
+
+  socket.on('navigatePhase', (phase) => {
+    gameState.phase = phase;
+    io.emit('updateState', gameState);
+  });
+
+  socket.on('selectGroup', (groupName) => {
+    if (gameState.groups[groupName]) {
+      gameState.activeGroup = gameState.groups[groupName];
+      gameState.players = {};
+      gameState.activeGroup.players.forEach((pName, idx) => {
+        const fakeId = `p_${idx}_${Date.now()}`;
+        gameState.players[fakeId] = { id: fakeId, name: pName, role: null, word: null, isAlive: true };
+      });
     }
-    const pCount = Object.keys(gameState.players).length;
-    if (pCount >= 20) {
-      socket.emit('errorMsg', 'Room is full (Maximum 20 players allowed)!');
-      return;
-    }
-    gameState.players[socket.id] = {
-      id: socket.id,
-      name: name || `Player_${Math.floor(Math.random()*100)}`,
-      role: null,
-      word: null,
-      isAlive: true
-    };
+    io.emit('updateState', gameState);
+  });
+
+  socket.on('saveGroup', ({ groupName, color, playerList }) => {
+    gameState.groups[groupName] = { name: groupName, color: color || "#3897f0", players: playerList };
+    gameState.activeGroup = gameState.groups[groupName];
+    gameState.players = {};
+    playerList.forEach((pName, idx) => {
+      const fakeId = `p_${idx}_${Date.now()}`;
+      gameState.players[fakeId] = { id: fakeId, name: pName, role: null, word: null, isAlive: true };
+    });
+    gameState.phase = 'lobby';
     io.emit('updateState', gameState);
   });
 
   socket.on('updateSettings', (newSettings) => {
-    if (gameState.phase !== 'lobby') return;
     gameState.settings.noRepeat = Boolean(newSettings.noRepeat);
     gameState.settings.undercoverCount = parseInt(newSettings.undercoverCount) || 0;
     gameState.settings.mrWhiteCount = parseInt(newSettings.mrWhiteCount) || 0;
@@ -93,24 +111,10 @@ io.on('connection', (socket) => {
       return;
     }
 
-    const totalSpecial = gameState.settings.undercoverCount + gameState.settings.mrWhiteCount;
-    if (totalSpecial >= totalPlayers) {
-      socket.emit('errorMsg', `Too many special roles (${totalSpecial}) for ${totalPlayers} players! Leave room for Civilians.`);
-      return;
-    }
-
-    let selectedPair;
-    let attempts = 0;
-    while (attempts < 5) {
-      selectedPair = await getAIWordPair();
-      if (!gameState.settings.noRepeat || !usedWordPairs.includes(selectedPair.civilian)) break;
-      attempts++;
-    }
-    if (gameState.settings.noRepeat) usedWordPairs.push(selectedPair.civilian);
+    let selectedPair = await getAIWordPair();
     gameState.currentPair = selectedPair;
 
     let shuffled = [...pIds].sort(() => 0.5 - Math.random());
-
     let mrWhiteAssigned = 0;
     let undercoverAssigned = 0;
 
@@ -132,37 +136,46 @@ io.on('connection', (socket) => {
       }
     });
 
-    gameState.phase = 'describing';
+    gameState.phase = 'cards';
     gameState.round = 1;
-    gameState.playerOrder = [...shuffled].sort(() => 0.5 - Math.random());
+    gameState.playerOrder = [...shuffled];
     gameState.turnIndex = 0;
+    gameState.cardsPicked = {};
     gameState.clues = {};
     gameState.votes = {};
     io.emit('updateState', gameState);
   });
 
-  socket.on('submitClue', (clueText) => {
-    const player = gameState.players[socket.id];
-    if (!player || !player.isAlive) return;
-
-    gameState.clues[socket.id] = clueText;
-    gameState.turnIndex++;
-
-    let aliveOrder = gameState.playerOrder.filter(id => gameState.players[id] && gameState.players[id].isAlive);
-    if (gameState.turnIndex >= aliveOrder.length) {
-      gameState.phase = 'voting';
+  socket.on('pickCard', (playerId) => {
+    gameState.cardsPicked[playerId] = true;
+    let totalAlive = Object.values(gameState.players).filter(p => p.isAlive).length;
+    
+    if (Object.keys(gameState.cardsPicked).length >= totalAlive) {
+      gameState.phase = 'describing';
+      gameState.turnIndex = 0;
     }
     io.emit('updateState', gameState);
   });
 
-  socket.on('submitVote', (targetId) => {
-    const voter = gameState.players[socket.id];
-    if (!voter || !voter.isAlive) return;
+  socket.on('submitClue', (clueText) => {
+    let aliveOrder = gameState.playerOrder.filter(id => gameState.players[id] && gameState.players[id].isAlive);
+    let currentTurnId = aliveOrder[gameState.turnIndex];
+    
+    if (currentTurnId) {
+      gameState.clues[currentTurnId] = clueText;
+      gameState.turnIndex++;
+      if (gameState.turnIndex >= aliveOrder.length) {
+        gameState.phase = 'voting';
+      }
+    }
+    io.emit('updateState', gameState);
+  });
 
-    gameState.votes[socket.id] = targetId;
+  socket.on('submitVote', (voterId, targetId) => {
+    gameState.votes[voterId] = targetId;
     let alivePlayers = Object.values(gameState.players).filter(p => p.isAlive);
 
-    if (Object.keys(gameState.votes).length === alivePlayers.length) {
+    if (Object.keys(gameState.votes).length >= alivePlayers.length) {
       processVotes();
     } else {
       io.emit('updateState', gameState);
@@ -170,21 +183,12 @@ io.on('connection', (socket) => {
   });
 
   socket.on('mrWhiteGuess', (guess) => {
-    const player = gameState.players[socket.id];
-    if (!player || player.role !== 'mrWhite') return;
-
-    if (guess.trim().toLowerCase() === gameState.currentPair.civilian.toLowerCase()) {
-      endGame(`Mr. White (${player.name}) guessed the correct word ("${gameState.currentPair.civilian}") and wins the game!`);
+    let mrWhite = Object.values(gameState.players).find(p => p.role === 'mrWhite');
+    if (guess.trim().toUpperCase() === gameState.currentPair.civilian.toUpperCase()) {
+      endGame(`Mr. White (${mrWhite ? mrWhite.name : ''}) guessed "${gameState.currentPair.civilian}" correctly and wins solo!`);
     } else {
-      player.isAlive = false;
       checkWinConditions();
     }
-  });
-
-  socket.on('disconnect', () => {
-    delete gameState.players[socket.id];
-    if (Object.keys(gameState.players).length === 0) gameState.phase = 'lobby';
-    io.emit('updateState', gameState);
   });
 });
 
@@ -196,15 +200,13 @@ function processVotes() {
 
   let maxVotes = 0;
   for (let id in voteCounts) {
-    if (voteCounts[id] > maxVotes) {
-      maxVotes = voteCounts[id];
-    }
+    if (voteCounts[id] > maxVotes) maxVotes = voteCounts[id];
   }
 
   let highestVotedIds = Object.keys(voteCounts).filter(id => voteCounts[id] === maxVotes);
 
-  // If tie, no one is eliminated this round
   if (highestVotedIds.length > 1) {
+    // Tie logic
     gameState.phase = 'describing';
     gameState.round++;
     gameState.turnIndex = 0;
@@ -236,23 +238,19 @@ function checkWinConditions() {
 
   let totalImposters = aliveUndercovers + aliveMrWhites;
 
-  // Win Condition 1: Civilians win when all Imposters (Undercover + Mr. White) are dead
   if (totalImposters === 0) {
-    endGame("Civilians successfully eliminated all imposters! Civilians win the game!");
+    endGame("Civilians successfully eliminated all imposters! Civilians win!");
     return;
   }
 
-  // Win Condition 2: Imposters win when their number is equal to or greater than active Civilians
   if (totalImposters >= aliveCivilians) {
-    endGame("Imposters (Undercover & Mr. White) equaled or outnumbered Civilians! Imposters win!");
+    endGame("Imposters equaled or outnumbered Civilians! Imposters win!");
     return;
   }
 
-  // Continue to next round
   gameState.phase = 'describing';
   gameState.round++;
   gameState.turnIndex = 0;
-  gameState.playerOrder = alivePlayers.map(p => p.id).sort(() => 0.5 - Math.random());
   gameState.clues = {};
   gameState.votes = {};
   io.emit('updateState', gameState);
