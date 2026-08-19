@@ -1,7 +1,6 @@
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
-const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 const app = express();
 const server = http.createServer(app);
@@ -9,258 +8,167 @@ const io = new Server(server);
 
 app.use(express.static('public'));
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "YOUR_API_KEY_HERE");
-
-const fallbackCategories = [
-  { civilian: "SHOWER", undercover: "BATH" },
-  { civilian: "COFFEE", undercover: "TEA" },
-  { civilian: "PIZZA", undercover: "BURGER" },
-  { civilian: "LAPTOP", undercover: "TABLET" },
-  { civilian: "BEACH", undercover: "DESERT" }
+// Word database (Civilian word vs Undercover word)
+const WORD_PAIRS = [
+  { civilian: "Apple", undercover: "Pear" },
+  { civilian: "Laptop", undercover: "Tablet" },
+  { civilian: "Coffee", undercover: "Tea" },
+  { civilian: "Cat", undercover: "Dog" },
+  { civilian: "Batman", undercover: "Spider-Man" },
+  { civilian: "Pizza", undercover: "Burger" }
 ];
 
-let usedWordPairs = [];
+const rooms = {};
 
-let gameState = {
-  players: {},
-  groups: {
-    "V5": { name: "V5", color: "#ff5e5e", players: ["Shivam", "Sneha", "Mahima", "Dhanush", "Anand"] }
-  },
-  activeGroup: null,
-  phase: 'home', // 'home', 'lobby', 'groups', 'editGroup', 'cards', 'describing', 'voting', 'mrWhiteGuess', 'ended'
-  round: 1,
-  turnIndex: 0,
-  playerOrder: [],
-  cardsPicked: {},
-  clues: {},
-  votes: {},
-  settings: {
-    noRepeat: true,
-    undercoverCount: 1,
-    mrWhiteCount: 1,
-    wordPack: "Standard"
-  },
-  currentPair: { civilian: "", undercover: "" },
-  winnerMessage: ""
-};
+function generateRoomCode() {
+  return Math.random().toString(36).substring(2, 6).toUpperCase();
+}
 
-async function getAIWordPair() {
-  try {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    const response = await model.generateContent(
-      'Generate a pair of closely related words for a word-imposter party game in UPPERCASE. One "civilian" word, one "undercover" word. Return ONLY valid JSON: {"civilian": "WORD1", "undercover": "WORD2"}'
-    );
-    let text = response.response.text().trim().replace(/```json/g, '').replace(/```/g, '').trim();
-    const parsed = JSON.parse(text);
-    if (parsed.civilian && parsed.undercover) return parsed;
-  } catch (e) {
-    console.log("AI generation error, using fallback:", e.message);
-  }
-  return fallbackCategories[Math.floor(Math.random() * fallbackCategories.length)];
+function shuffle(array) {
+  return array.sort(() => Math.random() - 0.5);
 }
 
 io.on('connection', (socket) => {
-  console.log(`User connected: ${socket.id}`);
 
-  socket.on('joinLobby', () => {
-    socket.emit('updateState', gameState);
+  // CREATE ROOM
+  socket.on('createRoom', ({ username }) => {
+    const roomCode = generateRoomCode();
+    rooms[roomCode] = {
+      code: roomCode,
+      host: socket.id,
+      gameState: 'LOBBY', // LOBBY, PLAYING, VOTING, GAME_OVER
+      players: [{ id: socket.id, name: username, alive: true, role: null, word: null, votes: 0 }],
+      currentTurnIndex: 0,
+      civiliansWord: "",
+      undercoverWord: "",
+      votingResults: {}
+    };
+
+    socket.join(roomCode);
+    socket.emit('roomCreated', { roomCode, playerId: socket.id });
+    io.to(roomCode).emit('updateRoom', rooms[roomCode]);
   });
 
-  socket.on('navigatePhase', (phase) => {
-    gameState.phase = phase;
-    io.emit('updateState', gameState);
+  // JOIN ROOM
+  socket.on('joinRoom', ({ username, roomCode }) => {
+    const code = roomCode.toUpperCase();
+    const room = rooms[code];
+
+    if (!room) return socket.emit('errorMsg', 'Room not found.');
+    if (room.gameState !== 'LOBBY') return socket.emit('errorMsg', 'Game already in progress.');
+    if (room.players.some(p => p.name === username)) return socket.emit('errorMsg', 'Name taken.');
+
+    room.players.push({ id: socket.id, name: username, alive: true, role: null, word: null, votes: 0 });
+    socket.join(code);
+
+    socket.emit('roomJoined', { roomCode: code, playerId: socket.id });
+    io.to(code).emit('updateRoom', room);
   });
 
-  socket.on('selectGroup', (groupName) => {
-    if (gameState.groups[groupName]) {
-      gameState.activeGroup = gameState.groups[groupName];
-      gameState.players = {};
-      gameState.activeGroup.players.forEach((pName, idx) => {
-        const fakeId = `p_${idx}_${Date.now()}`;
-        gameState.players[fakeId] = { id: fakeId, name: pName, role: null, word: null, isAlive: true };
-      });
-    }
-    io.emit('updateState', gameState);
-  });
+  // START GAME
+  socket.on('startGame', ({ roomCode }) => {
+    const room = rooms[roomCode];
+    if (!room || room.host !== socket.id) return;
+    if (room.players.length < 3) return socket.emit('errorMsg', 'Need at least 3 players.');
 
-  socket.on('saveGroup', ({ groupName, color, playerList }) => {
-    gameState.groups[groupName] = { name: groupName, color: color || "#3897f0", players: playerList };
-    gameState.activeGroup = gameState.groups[groupName];
-    gameState.players = {};
-    playerList.forEach((pName, idx) => {
-      const fakeId = `p_${idx}_${Date.now()}`;
-      gameState.players[fakeId] = { id: fakeId, name: pName, role: null, word: null, isAlive: true };
+    // Reset game state
+    room.gameState = 'PLAYING';
+    const pair = WORD_PAIRS[Math.floor(Math.random() * WORD_PAIRS.length)];
+    room.civiliansWord = pair.civilian;
+    room.undercoverWord = pair.undercover;
+
+    // Distribute roles (1 Undercover, 1 Mr. White if >=4 players, rest Civilians)
+    let roles = ['UNDERCOVER'];
+    if (room.players.length >= 4) roles.push('MR_WHITE');
+    while (roles.length < room.players.length) roles.push('CIVILIAN');
+    roles = shuffle(roles);
+
+    room.players.forEach((p, index) => {
+      p.alive = true;
+      p.role = roles[index];
+      p.word = p.role === 'CIVILIAN' ? room.civiliansWord : (p.role === 'UNDERCOVER' ? room.undercoverWord : '??? (You are Mr. White)');
     });
-    gameState.phase = 'lobby';
-    io.emit('updateState', gameState);
+
+    room.currentTurnIndex = 0;
+    io.to(roomCode).emit('gameStarted', room);
   });
 
-  socket.on('updateSettings', (newSettings) => {
-    gameState.settings.noRepeat = Boolean(newSettings.noRepeat);
-    gameState.settings.undercoverCount = parseInt(newSettings.undercoverCount) || 0;
-    gameState.settings.mrWhiteCount = parseInt(newSettings.mrWhiteCount) || 0;
-    io.emit('updateState', gameState);
-  });
+  // NEXT TURN / START VOTING
+  socket.on('nextTurn', ({ roomCode }) => {
+    const room = rooms[roomCode];
+    if (!room) return;
 
-  socket.on('startGame', async () => {
-    const pIds = Object.keys(gameState.players);
-    const totalPlayers = pIds.length;
+    let alivePlayers = room.players.filter(p => p.alive);
+    room.currentTurnIndex++;
 
-    if (totalPlayers < 3) {
-      socket.emit('errorMsg', 'Need at least 3 players to start!');
-      return;
+    if (room.currentTurnIndex >= alivePlayers.length) {
+      room.gameState = 'VOTING';
+      room.votingResults = {};
+      alivePlayers.forEach(p => p.votes = 0);
+      io.to(roomCode).emit('startVoting', room);
+    } else {
+      io.to(roomCode).emit('turnUpdate', { currentTurnIndex: room.currentTurnIndex });
     }
+  });
 
-    let selectedPair = await getAIWordPair();
-    gameState.currentPair = selectedPair;
+  // SUBMIT VOTE
+  socket.on('submitVote', ({ roomCode, targetId }) => {
+    const room = rooms[roomCode];
+    if (!room || room.gameState !== 'VOTING') return;
 
-    let shuffled = [...pIds].sort(() => 0.5 - Math.random());
-    let mrWhiteAssigned = 0;
-    let undercoverAssigned = 0;
+    const target = room.players.find(p => p.id === targetId);
+    if (target) target.votes += 1;
 
-    shuffled.forEach(id => {
-      let player = gameState.players[id];
-      player.isAlive = true;
+    room.votingResults[socket.id] = targetId;
 
-      if (mrWhiteAssigned < gameState.settings.mrWhiteCount) {
-        player.role = 'mrWhite';
-        player.word = '??? (You are Mr. White)';
-        mrWhiteAssigned++;
-      } else if (undercoverAssigned < gameState.settings.undercoverCount) {
-        player.role = 'undercover';
-        player.word = gameState.currentPair.undercover;
-        undercoverAssigned++;
+    const aliveCount = room.players.filter(p => p.alive).length;
+    if (Object.keys(room.votingResults).length >= aliveCount) {
+      // Process Elimination
+      let eliminated = room.players.filter(p => p.alive).reduce((max, p) => p.votes > max.votes ? p : max, room.players[0]);
+      eliminated.alive = false;
+
+      checkWinConditions(roomCode, eliminated);
+    }
+  });
+
+  // DISCONNECT HANDLER
+  socket.on('disconnect', () => {
+    for (let code in rooms) {
+      const room = rooms[code];
+      room.players = room.players.filter(p => p.id !== socket.id);
+      if (room.players.length === 0) {
+        delete rooms[code];
       } else {
-        player.role = 'civilian';
-        player.word = gameState.currentPair.civilian;
+        if (room.host === socket.id) room.host = room.players[0].id;
+        io.to(code).emit('updateRoom', room);
       }
-    });
-
-    gameState.phase = 'cards';
-    gameState.round = 1;
-    gameState.playerOrder = [...shuffled];
-    gameState.turnIndex = 0;
-    gameState.cardsPicked = {};
-    gameState.clues = {};
-    gameState.votes = {};
-    io.emit('updateState', gameState);
-  });
-
-  socket.on('pickCard', (playerId) => {
-    gameState.cardsPicked[playerId] = true;
-    let totalAlive = Object.values(gameState.players).filter(p => p.isAlive).length;
-    
-    if (Object.keys(gameState.cardsPicked).length >= totalAlive) {
-      gameState.phase = 'describing';
-      gameState.turnIndex = 0;
-    }
-    io.emit('updateState', gameState);
-  });
-
-  socket.on('submitClue', (clueText) => {
-    let aliveOrder = gameState.playerOrder.filter(id => gameState.players[id] && gameState.players[id].isAlive);
-    let currentTurnId = aliveOrder[gameState.turnIndex];
-    
-    if (currentTurnId) {
-      gameState.clues[currentTurnId] = clueText;
-      gameState.turnIndex++;
-      if (gameState.turnIndex >= aliveOrder.length) {
-        gameState.phase = 'voting';
-      }
-    }
-    io.emit('updateState', gameState);
-  });
-
-  socket.on('submitVote', (voterId, targetId) => {
-    gameState.votes[voterId] = targetId;
-    let alivePlayers = Object.values(gameState.players).filter(p => p.isAlive);
-
-    if (Object.keys(gameState.votes).length >= alivePlayers.length) {
-      processVotes();
-    } else {
-      io.emit('updateState', gameState);
-    }
-  });
-
-  socket.on('mrWhiteGuess', (guess) => {
-    let mrWhite = Object.values(gameState.players).find(p => p.role === 'mrWhite');
-    if (guess.trim().toUpperCase() === gameState.currentPair.civilian.toUpperCase()) {
-      endGame(`Mr. White (${mrWhite ? mrWhite.name : ''}) guessed "${gameState.currentPair.civilian}" correctly and wins solo!`);
-    } else {
-      checkWinConditions();
     }
   });
 });
 
-function processVotes() {
-  let voteCounts = {};
-  Object.values(gameState.votes).forEach(targetId => {
-    voteCounts[targetId] = (voteCounts[targetId] || 0) + 1;
-  });
+function checkWinConditions(roomCode, eliminatedPlayer) {
+  const room = rooms[roomCode];
+  const alive = room.players.filter(p => p.alive);
+  const aliveImp = alive.filter(p => p.role === 'UNDERCOVER' || p.role === 'MR_WHITE');
+  const aliveCiv = alive.filter(p => p.role === 'CIVILIAN');
 
-  let maxVotes = 0;
-  for (let id in voteCounts) {
-    if (voteCounts[id] > maxVotes) maxVotes = voteCounts[id];
+  let winner = null;
+
+  if (aliveImp.length === 0) {
+    winner = "CIVILIANS";
+  } else if (aliveImp.length >= aliveCiv.length) {
+    winner = "IMPOSTORS (Undercover/Mr. White)";
   }
 
-  let highestVotedIds = Object.keys(voteCounts).filter(id => voteCounts[id] === maxVotes);
-
-  if (highestVotedIds.length > 1) {
-    // Tie logic
-    gameState.phase = 'describing';
-    gameState.round++;
-    gameState.turnIndex = 0;
-    gameState.clues = {};
-    gameState.votes = {};
-    io.emit('updateState', gameState);
-    return;
+  if (winner) {
+    room.gameState = 'GAME_OVER';
+    io.to(roomCode).emit('gameOver', { winner, eliminated: eliminatedPlayer, room });
+  } else {
+    // Next round
+    room.gameState = 'PLAYING';
+    room.currentTurnIndex = 0;
+    io.to(roomCode).emit('roundContinued', { eliminated: eliminatedPlayer, room });
   }
-
-  let eliminatedId = highestVotedIds[0];
-  let eliminatedPlayer = gameState.players[eliminatedId];
-  eliminatedPlayer.isAlive = false;
-
-  if (eliminatedPlayer.role === 'mrWhite') {
-    gameState.phase = 'mrWhiteGuess';
-    gameState.votes = {};
-    io.emit('updateState', gameState);
-    return;
-  }
-
-  checkWinConditions();
 }
 
-function checkWinConditions() {
-  let alivePlayers = Object.values(gameState.players).filter(p => p.isAlive);
-  let aliveCivilians = alivePlayers.filter(p => p.role === 'civilian').length;
-  let aliveUndercovers = alivePlayers.filter(p => p.role === 'undercover').length;
-  let aliveMrWhites = alivePlayers.filter(p => p.role === 'mrWhite').length;
-
-  let totalImposters = aliveUndercovers + aliveMrWhites;
-
-  if (totalImposters === 0) {
-    endGame("Civilians successfully eliminated all imposters! Civilians win!");
-    return;
-  }
-
-  if (totalImposters >= aliveCivilians) {
-    endGame("Imposters equaled or outnumbered Civilians! Imposters win!");
-    return;
-  }
-
-  gameState.phase = 'describing';
-  gameState.round++;
-  gameState.turnIndex = 0;
-  gameState.clues = {};
-  gameState.votes = {};
-  io.emit('updateState', gameState);
-}
-
-function endGame(msg) {
-  gameState.phase = 'ended';
-  gameState.winnerMessage = msg;
-  io.emit('updateState', gameState);
-}
-
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+server.listen(3000, () => console.log('Server running on http://localhost:3000'));

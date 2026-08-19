@@ -5,299 +5,68 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Undercover Game</title>
   <style>
-    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    body {
-      margin: 0; padding: 0; background: #e2e8f0;
-      display: flex; justify-content: center; align-items: center; min-height: 100vh;
-    }
-    .mobile-frame {
-      width: 100%; max-width: 400px; height: 100vh; max-height: 820px;
-      background: linear-gradient(135deg, #fef9c3 0%, #fef08a 40%, #e0f2fe 100%);
-      position: relative; overflow-y: auto; border-radius: 20px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.2); display: flex; flex-direction: column;
-    }
-    /* Home UI */
-    .home-header { display: flex; justify-content: space-between; padding: 15px; }
-    .lang-btn { background: #fff; border-radius: 20px; padding: 5px 12px; display: flex; align-items: center; gap: 5px; font-weight: bold; font-size: 12px; }
-    .profile-icon { width: 35px; height: 35px; background: #93c5fd; border-radius: 50%; border: 2px solid #fff; }
-    .hero-section { text-align: center; margin-top: 10px; }
-    .title-text { font-size: 42px; font-weight: 900; line-height: 0.9; color: #000; text-transform: uppercase; letter-spacing: -1px; }
-    .play-card {
-      width: 140px; height: 180px; border: 4px solid #000; background: #fff;
-      margin: 30px auto; position: relative; border-radius: 8px; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .play-arrow { width: 0; height: 0; border-top: 25px solid transparent; border-bottom: 25px solid transparent; border-left: 40px solid #000; }
-    
-    /* Navigation Bar */
-    .bottom-nav {
-      position: absolute; bottom: 0; width: 100%; height: 60px; background: rgba(255,255,255,0.8);
-      display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #ccc;
-    }
-    .nav-item { font-size: 22px; cursor: pointer; }
-
-    /* Group & Setup UI */
-    .top-bar { display: flex; justify-content: space-between; align-items: center; padding: 15px; }
-    .group-badge { background: #0084ff; color: #fff; padding: 8px 15px; border-radius: 20px; font-weight: bold; display: flex; align-items: center; gap: 6px; cursor: pointer; }
-    .card-panel { background: #fff; border-radius: 20px; margin: 15px; padding: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-    .badge-pill { display: inline-block; padding: 8px 16px; border-radius: 20px; font-weight: bold; color: #fff; margin: 4px; }
-    .bg-blue { background: #3897f0; }
-    .bg-black { background: #000; }
-    .bg-white-btn { background: #fff; color: #000; border: 1px solid #ccc; }
-    .action-btn { width: calc(100% - 30px); margin: 15px; padding: 15px; background: #10b981; color: #fff; border: none; border-radius: 25px; font-size: 18px; font-weight: bold; cursor: pointer; }
-    
-    /* Cards UI */
-    .cards-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 15px; }
-    .role-card { background: #eab308; height: 120px; border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 36px; color: #fff; cursor: pointer; font-weight: bold; }
-    
-    /* Modal / Overlay */
-    .modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; padding: 20px; }
-    .modal-box { background: #fff; width: 100%; border-radius: 20px; padding: 20px; text-align: center; }
-    .avatar-circle { width: 60px; height: 60px; border-radius: 50%; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; margin: 0 auto 10px; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background: #0f172a; color: #f8fafc; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+    .card { background: #1e293b; border-radius: 16px; padding: 24px; width: 100%; max-width: 420px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 1px solid #334155; }
+    h1, h2 { text-align: center; margin-bottom: 20px; color: #38bdf8; }
+    input, button { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 8px; border: none; font-size: 16px; }
+    input { background: #334155; color: white; border: 1px solid #475569; }
+    button { background: #0284c7; color: white; font-weight: bold; cursor: pointer; transition: 0.2s; }
+    button:hover { background: #0369a1; }
+    .secondary-btn { background: #475569; }
+    .secondary-btn:hover { background: #334155; }
+    .hidden { display: none !important; }
+    ul { list-style: none; margin-bottom: 16px; }
+    li { background: #334155; padding: 10px; border-radius: 6px; margin-bottom: 8px; display: flex; justify-content: space-between; }
+    .secret-box { background: #0284c7; padding: 20px; text-align: center; border-radius: 12px; margin-bottom: 20px; font-weight: bold; font-size: 20px; }
+    .active-turn { border: 2px solid #38bdf8; background: #0284c7; }
   </style>
 </head>
 <body>
 
-<div class="mobile-frame" id="app"></div>
+  <div class="card">
+    <h1>🕵️ UNDERCOVER</h1>
 
-<script src="/socket.io/socket.io.js"></script>
-<script>
-  const socket = io();
-  let state = {};
+    <!-- VIEW 1: AUTH / JOIN -->
+    <div id="auth-view">
+      <input type="text" id="username" placeholder="Your Nickname">
+      <button onclick="createRoom()">Create New Game</button>
+      <input type="text" id="room-code-input" placeholder="Room Code (e.g. ABCD)">
+      <button class="secondary-btn" onclick="joinRoom()">Join Game</button>
+    </div>
 
-  socket.emit('joinLobby');
+    <!-- VIEW 2: LOBBY -->
+    <div id="lobby-view" class="hidden">
+      <h2>Room Code: <span id="display-room-code" style="color:#f59e0b"></span></h2>
+      <ul id="player-list"></ul>
+      <button id="start-btn" class="hidden" onclick="startGame()">Start Game</button>
+      <p id="waiting-msg" style="text-align: center; color: #94a3b8;">Waiting for host to start...</p>
+    </div>
 
-  socket.on('updateState', (newState) => {
-    state = newState;
-    render();
-  });
+    <!-- VIEW 3: GAMEPLAY -->
+    <div id="game-view" class="hidden">
+      <div id="secret-word-card" class="secret-box">Tap to reveal secret word</div>
+      <h2>Turn Order</h2>
+      <ul id="turn-list"></ul>
+      <button id="next-turn-btn" onclick="nextTurn()">Next Player Clue</button>
+    </div>
 
-  function render() {
-    const app = document.getElementById('app');
-    
-    if (state.phase === 'home') {
-      app.innerHTML = `
-        <div class="home-header">
-          <div class="lang-btn">🇬🇧 English</div>
-          <div class="profile-icon"></div>
-        </div>
-        <div class="hero-section">
-          <div class="title-text">UNDER<br>COVER</div>
-        </div>
-        <div class="play-card" onclick="socket.emit('navigatePhase', 'lobby')">
-          <div class="play-arrow"></div>
-        </div>
-        <div class="bottom-nav">
-          <span class="nav-item">⚙️</span>
-          <span class="nav-item">🛒</span>
-          <span class="nav-item">📜</span>
-          <span class="nav-item">🏆</span>
-          <span class="nav-item">🧰</span>
-        </div>
-      `;
-    } 
-    else if (state.phase === 'lobby') {
-      let activeGroup = state.activeGroup || { name: "V5", players: ["Shivam", "Sneha", "Mahima", "Dhanush", "Anand"] };
-      let pCount = Object.keys(state.players).length || activeGroup.players.length;
+    <!-- VIEW 4: VOTING -->
+    <div id="voting-view" class="hidden">
+      <h2>Vote to Eliminate</h2>
+      <div id="vote-buttons"></div>
+    </div>
 
-      app.innerHTML = `
-        <div class="top-bar">
-          <div></div>
-          <div class="group-badge" onclick="socket.emit('navigatePhase', 'groups')">👥 Groups</div>
-        </div>
-        <h2 style="text-align:center; margin:0;">Players: ${pCount}</h2>
-        
-        <div style="background:#ff5e5e; color:#fff; margin:15px; padding:12px; border-radius:15px 15px 0 0; text-align:center; font-weight:bold;">
-          ${activeGroup.name} <span style="font-size:12px; font-weight:normal;">(${pCount} players)</span>
-        </div>
-        <div style="background:#fff; margin:0 15px 15px; padding:10px; border-radius:0 0 15px 15px; display:flex; gap:10px; overflow-x:auto;">
-          ${activeGroup.players.map(p => `
-            <div style="text-align:center;">
-              <div class="avatar-circle" style="background:#2dd4bf; width:40px; height:40px; font-size:16px;">${p[0]}</div>
-              <div style="font-size:11px; font-weight:bold;">${p}</div>
-            </div>
-          `).join('')}
-        </div>
+    <!-- VIEW 5: GAME OVER -->
+    <div id="gameover-view" class="hidden">
+      <h2 id="winner-text"></h2>
+      <p id="eliminated-text" style="text-align: center; margin-bottom: 15px;"></p>
+      <button onclick="location.reload()">Back to Lobby</button>
+    </div>
 
-        <div class="card-panel" style="text-align:center;">
-          <div>
-            <span class="badge-pill bg-blue">${pCount - state.settings.undercoverCount - state.settings.mrWhiteCount} Civilians</span><br>
-            <span class="badge-pill bg-black">➖ ${state.settings.undercoverCount} Undercover</span><br>
-            <span class="badge-pill bg-white-btn">➖ ${state.settings.mrWhiteCount} Mr. White</span>
-          </div>
-        </div>
+  </div>
 
-        <div class="card-panel" style="text-align:center; color:#888;">
-          Add special roles ( silhouettes )
-        </div>
-
-        <div class="card-panel" style="text-align:center;">
-          <small>Words</small>
-          <div style="font-weight:bold;">${state.settings.wordPack || 'Standard'}</div>
-        </div>
-
-        <button class="action-btn" onclick="socket.emit('startGame')">Start</button>
-      `;
-    }
-    else if (state.phase === 'groups') {
-      let g = state.groups["V5"] || { name: "V5", players: ["Shivam", "Sneha", "Mahima", "Dhanush", "Anand"] };
-      app.innerHTML = `
-        <div style="text-align:center; padding:20px;">
-          <h2>Groups <span style="cursor:pointer;" onclick="socket.emit('navigatePhase', 'editGroup')">➕</span></h2>
-          <p style="font-size:12px; color:#666;">Create and edit groups of players to save time next time you play.</p>
-        </div>
-        <div style="background:#fff; margin:15px; border-radius:20px; overflow:hidden; box-shadow:0 4px 10px rgba(0,0,0,0.1);">
-          <div style="background:#ff5e5e; color:#fff; padding:10px; text-align:center; font-weight:bold; position:relative;">
-            ${g.name}
-            <span style="position:absolute; right:15px; cursor:pointer;" onclick="socket.emit('navigatePhase', 'editGroup')">✏️</span>
-          </div>
-          <div style="padding:15px; display:flex; flex-wrap:wrap; gap:10px; justify-content:center;">
-            ${g.players.map(p => `
-              <div style="text-align:center;">
-                <div class="avatar-circle" style="background:#2dd4bf;">${p[0]}</div>
-                <div style="font-size:12px; font-weight:bold;">${p}</div>
-              </div>
-            `).join('')}
-          </div>
-          <div style="text-align:center; padding:15px;">
-            <button style="border:2px solid #ff5e5e; background:transparent; color:#ff5e5e; padding:8px 20px; border-radius:20px; font-weight:bold; cursor:pointer;" onclick="socket.emit('selectGroup', '${g.name}'); socket.emit('navigatePhase', 'lobby');">Select group</button>
-          </div>
-        </div>
-        <div style="text-align:center; margin-top:30px;">
-          <button style="background:#3897f0; color:#fff; border:none; width:50px; height:50px; border-radius:50%; font-size:20px; cursor:pointer;" onclick="socket.emit('navigatePhase', 'lobby')">✖</button>
-        </div>
-      `;
-    }
-    else if (state.phase === 'editGroup') {
-      let g = state.groups["V5"] || { name: "V5", players: ["Shivam", "Sneha", "Mahima", "Dhanush", "Anand"] };
-      app.innerHTML = `
-        <div style="padding:15px;">
-          <span style="font-size:24px; cursor:pointer;" onclick="socket.emit('navigatePhase', 'groups')">⬅️</span>
-          <h2 style="text-align:center; margin:-30px 0 20px;">${g.name} ✏️</h2>
-        </div>
-        <div style="background:#fff; margin:15px; border-radius:20px; overflow:hidden;">
-          <div style="background:#ff5e5e; color:#fff; padding:12px; text-align:center; font-weight:bold;">
-            Add, remove or reorder players
-          </div>
-          <div style="padding:15px;" id="player-edit-list">
-            ${g.players.map(p => `
-              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
-                <div style="display:flex; align-items:center; gap:10px;">
-                  <div class="avatar-circle" style="background:#2dd4bf; width:35px; height:35px; font-size:14px; margin:0;">${p[0]}</div>
-                  <b>${p}</b>
-                </div>
-                <span style="cursor:pointer; color:#aaa;">🗑️</span>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-        <button class="action-btn" style="background:#3897f0;" onclick="socket.emit('navigatePhase', 'lobby')">Save changes</button>
-      `;
-    }
-    else if (state.phase === 'cards') {
-      let alivePlayers = Object.values(state.players).filter(p => p.isAlive);
-      let currentTurnPlayer = alivePlayers.find(p => !state.cardsPicked[p.id]) || alivePlayers[0];
-
-      app.innerHTML = `
-        <div style="background:#333; color:#fff; padding:15px; text-align:center;">
-          <h3 style="margin:0; color:#38bdf8;">${currentTurnPlayer.name}</h3>
-          <small>Please pick a card</small>
-        </div>
-        <div class="cards-grid">
-          ${alivePlayers.map(p => `
-            <div class="role-card" onclick="openCardModal('${p.id}')">
-              👤?
-            </div>
-          `).join('')}
-        </div>
-      `;
-    }
-    else if (state.phase === 'describing') {
-      let aliveOrder = state.playerOrder.filter(id => state.players[id] && state.players[id].isAlive);
-      let activePlayerId = aliveOrder[state.turnIndex];
-      let activePlayer = state.players[activePlayerId];
-
-      app.innerHTML = `
-        <div style="padding:20px; text-align:center;">
-          <h3>Round ${state.round} - Clues</h3>
-          <p>Current Turn: <b>${activePlayer ? activePlayer.name : ''}</b></p>
-          <input type="text" id="clueInput" placeholder="Enter 1-word clue" style="padding:10px; width:80%; border-radius:8px; border:1px solid #ccc;">
-          <button class="action-btn" onclick="submitClue()">Submit Clue</button>
-          
-          <div style="text-align:left; margin-top:20px;">
-            <h4>Clues:</h4>
-            ${Object.keys(state.clues).map(id => `<div><b>${state.players[id]?.name}:</b> ${state.clues[id]}</div>`).join('')}
-          </div>
-        </div>
-      `;
-    }
-    else if (state.phase === 'voting') {
-      app.innerHTML = `
-        <div style="padding:20px; text-align:center;">
-          <h3>Voting Phase</h3>
-          <p>Pass device to each player to cast their vote:</p>
-          ${Object.values(state.players).filter(p => p.isAlive).map(voter => `
-            <div style="margin-bottom:15px; background:#fff; padding:10px; border-radius:10px;">
-              <b>${voter.name}'s Vote:</b><br>
-              ${Object.values(state.players).filter(p => p.isAlive && p.id !== voter.id).map(target => `
-                <button style="margin:4px; padding:5px 10px;" onclick="socket.emit('submitVote', '${voter.id}', '${target.id}')">${target.name}</button>
-              `).join('')}
-            </div>
-          `).join('')}
-        </div>
-      `;
-    }
-    else if (state.phase === 'mrWhiteGuess') {
-      app.innerHTML = `
-        <div style="padding:20px; text-align:center;">
-          <h3>Mr. White was Voted Out!</h3>
-          <p>Mr. White can guess the secret civilian word to win solo:</p>
-          <input type="text" id="guessInput" placeholder="Guess word" style="padding:10px; width:80%;">
-          <button class="action-btn" onclick="socket.emit('mrWhiteGuess', document.getElementById('guessInput').value)">Submit Guess</button>
-        </div>
-      `;
-    }
-    else if (state.phase === 'ended') {
-      app.innerHTML = `
-        <div style="padding:20px; text-align:center;">
-          <h2>Game Over</h2>
-          <p style="font-size:18px; color:#eab308; font-weight:bold;">${state.winnerMessage}</p>
-          <p>Civilian Word: <b>${state.currentPair.civilian}</b></p>
-          <p>Undercover Word: <b>${state.currentPair.undercover}</b></p>
-          <button class="action-btn" onclick="socket.emit('navigatePhase', 'lobby')">Play Again</button>
-        </div>
-      `;
-    }
-  }
-
-  function openCardModal(playerId) {
-    const player = state.players[playerId];
-    const app = document.getElementById('app');
-    
-    const modalHtml = `
-      <div class="modal-overlay">
-        <div class="modal-box">
-          <div class="avatar-circle" style="background:#2dd4bf;">${player.name[0]}</div>
-          <h3 style="color:#3897f0; margin:5px 0;">${player.name}</h3>
-          <p style="color:#666; font-size:14px;">Your secret word is</p>
-          <div style="background:#f1f5f9; padding:20px; border-radius:12px; font-size:24px; font-weight:900; margin:15px 0;">
-            ${player.word}
-          </div>
-          <button class="action-btn" style="margin:0;" onclick="confirmCard('${player.id}')">OK</button>
-        </div>
-      </div>
-    `;
-    app.insertAdjacentHTML('beforeend', modalHtml);
-  }
-
-  function confirmCard(playerId) {
-    socket.emit('pickCard', playerId);
-  }
-
-  function submitClue() {
-    const val = document.getElementById('clueInput').value;
-    if (val) socket.emit('submitClue', val);
-  }
-</script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
