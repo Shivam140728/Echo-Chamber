@@ -9,7 +9,6 @@ const io = new Server(server);
 
 app.use(express.static('public'));
 
-// Fixed SDK Initialization
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "YOUR_API_KEY_HERE");
 
 const fallbackCategories = [
@@ -89,14 +88,14 @@ io.on('connection', (socket) => {
     const pIds = Object.keys(gameState.players);
     const totalPlayers = pIds.length;
 
-    if (totalPlayers < 2) {
-      socket.emit('errorMsg', 'Need at least 2 players to start!');
+    if (totalPlayers < 3) {
+      socket.emit('errorMsg', 'Need at least 3 players to start!');
       return;
     }
 
     const totalSpecial = gameState.settings.undercoverCount + gameState.settings.mrWhiteCount;
     if (totalSpecial >= totalPlayers) {
-      socket.emit('errorMsg', `Too many roles (${totalSpecial}) for ${totalPlayers} players! Leave room for Civilians.`);
+      socket.emit('errorMsg', `Too many special roles (${totalSpecial}) for ${totalPlayers} players! Leave room for Civilians.`);
       return;
     }
 
@@ -115,13 +114,13 @@ io.on('connection', (socket) => {
     let mrWhiteAssigned = 0;
     let undercoverAssigned = 0;
 
-    pIds.forEach(id => {
+    shuffled.forEach(id => {
       let player = gameState.players[id];
       player.isAlive = true;
 
       if (mrWhiteAssigned < gameState.settings.mrWhiteCount) {
         player.role = 'mrWhite';
-        player.word = '??? (Blank)';
+        player.word = '??? (You are Mr. White)';
         mrWhiteAssigned++;
       } else if (undercoverAssigned < gameState.settings.undercoverCount) {
         player.role = 'undercover';
@@ -135,7 +134,7 @@ io.on('connection', (socket) => {
 
     gameState.phase = 'describing';
     gameState.round = 1;
-    gameState.playerOrder = shuffled.sort(() => 0.5 - Math.random());
+    gameState.playerOrder = [...shuffled].sort(() => 0.5 - Math.random());
     gameState.turnIndex = 0;
     gameState.clues = {};
     gameState.votes = {};
@@ -149,8 +148,8 @@ io.on('connection', (socket) => {
     gameState.clues[socket.id] = clueText;
     gameState.turnIndex++;
 
-    let alivePlayers = Object.values(gameState.players).filter(p => p.isAlive);
-    if (gameState.turnIndex >= alivePlayers.length) {
+    let aliveOrder = gameState.playerOrder.filter(id => gameState.players[id] && gameState.players[id].isAlive);
+    if (gameState.turnIndex >= aliveOrder.length) {
       gameState.phase = 'voting';
     }
     io.emit('updateState', gameState);
@@ -172,10 +171,10 @@ io.on('connection', (socket) => {
 
   socket.on('mrWhiteGuess', (guess) => {
     const player = gameState.players[socket.id];
-    if (player.role !== 'mrWhite') return;
+    if (!player || player.role !== 'mrWhite') return;
 
     if (guess.trim().toLowerCase() === gameState.currentPair.civilian.toLowerCase()) {
-      endGame(`Mr. White (${player.name}) guessed the correct word ("${gameState.currentPair.civilian}") and wins the game solo!`);
+      endGame(`Mr. White (${player.name}) guessed the correct word ("${gameState.currentPair.civilian}") and wins the game!`);
     } else {
       player.isAlive = false;
       checkWinConditions();
@@ -195,30 +194,35 @@ function processVotes() {
     voteCounts[targetId] = (voteCounts[targetId] || 0) + 1;
   });
 
-  let highestVotes = 0;
-  let eliminatedId = null;
+  let maxVotes = 0;
   for (let id in voteCounts) {
-    if (voteCounts[id] > highestVotes) {
-      highestVotes = voteCounts[id];
-      eliminatedId = id;
+    if (voteCounts[id] > maxVotes) {
+      maxVotes = voteCounts[id];
     }
   }
 
-  if (eliminatedId) {
-    let eliminatedPlayer = gameState.players[eliminatedId];
-    eliminatedPlayer.isAlive = false;
+  let highestVotedIds = Object.keys(voteCounts).filter(id => voteCounts[id] === maxVotes);
 
-    if (eliminatedPlayer.role === 'mrWhite') {
-      gameState.phase = 'mrWhiteGuess';
-      gameState.votes = {};
-      io.emit('updateState', gameState);
-      return;
-    }
+  // If tie, no one is eliminated this round
+  if (highestVotedIds.length > 1) {
+    gameState.phase = 'describing';
+    gameState.round++;
+    gameState.turnIndex = 0;
+    gameState.clues = {};
+    gameState.votes = {};
+    io.emit('updateState', gameState);
+    return;
+  }
 
-    if (eliminatedPlayer.role === 'undercover') {
-      endGame(`Civilians successfully found the Undercover (${eliminatedPlayer.name})! Civilians win the game!`);
-      return;
-    }
+  let eliminatedId = highestVotedIds[0];
+  let eliminatedPlayer = gameState.players[eliminatedId];
+  eliminatedPlayer.isAlive = false;
+
+  if (eliminatedPlayer.role === 'mrWhite') {
+    gameState.phase = 'mrWhiteGuess';
+    gameState.votes = {};
+    io.emit('updateState', gameState);
+    return;
   }
 
   checkWinConditions();
@@ -226,13 +230,27 @@ function processVotes() {
 
 function checkWinConditions() {
   let alivePlayers = Object.values(gameState.players).filter(p => p.isAlive);
+  let aliveCivilians = alivePlayers.filter(p => p.role === 'civilian').length;
+  let aliveUndercovers = alivePlayers.filter(p => p.role === 'undercover').length;
+  let aliveMrWhites = alivePlayers.filter(p => p.role === 'mrWhite').length;
 
-  if (alivePlayers.length <= 2) {
-    endGame("Only 2 players left and the Undercover was not found! Mr. White wins the game!");
+  let totalImposters = aliveUndercovers + aliveMrWhites;
+
+  // Win Condition 1: Civilians win when all Imposters (Undercover + Mr. White) are dead
+  if (totalImposters === 0) {
+    endGame("Civilians successfully eliminated all imposters! Civilians win the game!");
     return;
   }
 
+  // Win Condition 2: Imposters win when their number is equal to or greater than active Civilians
+  if (totalImposters >= aliveCivilians) {
+    endGame("Imposters (Undercover & Mr. White) equaled or outnumbered Civilians! Imposters win!");
+    return;
+  }
+
+  // Continue to next round
   gameState.phase = 'describing';
+  gameState.round++;
   gameState.turnIndex = 0;
   gameState.playerOrder = alivePlayers.map(p => p.id).sort(() => 0.5 - Math.random());
   gameState.clues = {};
@@ -246,6 +264,5 @@ function endGame(msg) {
   io.emit('updateState', gameState);
 }
 
-// Configured dynamic PORT assignment for hosting on platforms like Render
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
