@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+ <meta charset="UTF-8">
+ <title>Undercover - Custom Win Rules</title>
+ <style>
+ body { font-family: Arial, sans-serif; background: #121212; color: #fff; text-align: center; padding: 20px; }
+ .card { background: #1e1e1e; padding: 25px; border-radius: 10px; max-width: 500px; margin: 20px auto; box-shadow: 0 4px 15px rgba(0,0,0,0.6); }
+ input, select, button { padding: 10px; margin: 8px; font-size: 16px; border-radius: 5px; border: none; }
+ button { background: #6200ee; color: #fff; cursor: pointer; font-weight: bold; }
+ button:hover { background: #3700b3; }
+ .settings-box { margin: 15px 0; background: #2d2d2d; padding: 12px; border-radius: 5px; text-align: left; }
+ ul { list-style: none; padding: 0; }
+ li { padding: 4px 0; }
+ </style>
+</head>
+<body>
+
+ <div id="app" class="card">
+ <h2>Undercover Game</h2>
+
+ <div id="login-screen">
+ <input type="text" id="username" placeholder="Enter your nickname">
+ <br>
+ <button onclick="joinGame()">Join Lobby</button>
+ </div>
+
+ <div id="game-screen" style="display:none;">
+ <h3 id="status-heading">Lobby</h3>
+
+ <div id="settings-box" class="settings-box">
+ <label><b>Undercover Agents:</b></label>
+ <input type="number" id="undercoverInput" min="0" max="10" value="1" style="width: 60px;" onchange="syncSettings()"><br>
+
+ <label><b>Mr. White Count:</b></label>
+ <input type="number" id="mrWhiteInput" min="0" max="10" value="1" style="width: 60px;" onchange="syncSettings()"><br>
+
+ <label style="cursor: pointer; display:block; margin-top:8px;">
+ <input type="checkbox" id="noRepeatToggle" checked onchange="syncSettings()">
+ Prevent Word Repeating (AI No-Repeat)
+ </label>
+ </div>
+
+ <div id="secret-word-box" style="background: #2d2d2d; padding: 12px; border-radius: 5px; margin-bottom: 15px; display:none;"></div>
+ <div id="game-content"></div>
+ </div>
+ </div>
+
+ <script src="/socket.io/socket.io.js"></script>
+ <script>
+ const socket = io();
+ let myId = '';
+
+ function joinGame() {
+ const name = document.getElementById('username').value;
+ if (!name) return alert('Please enter a name!');
+ socket.emit('joinGame', name);
+ document.getElementById('login-screen').style.display = 'none';
+ document.getElementById('game-screen').style.display = 'block';
+ }
+
+ function syncSettings() {
+ const settings = {
+ noRepeat: document.getElementById('noRepeatToggle').checked,
+ undercoverCount: document.getElementById('undercoverInput').value,
+ mrWhiteCount: document.getElementById('mrWhiteInput').value
+ };
+ socket.emit('updateSettings', settings);
+ }
+
+ socket.on('updateState', (state) => {
+ myId = socket.id;
+ const me = state.players[myId];
+ let content = '';
+
+ document.getElementById('noRepeatToggle').checked = state.settings.noRepeat;
+ document.getElementById('undercoverInput').value = state.settings.undercoverCount;
+ document.getElementById('mrWhiteInput').value = state.settings.mrWhiteCount;
+
+ if (state.phase === 'lobby') {
+ document.getElementById('status-heading').innerText = "Game Lobby";
+ document.getElementById('settings-box').style.display = 'block';
+ document.getElementById('secret-word-box').style.display = 'none';
+
+ let playerList = Object.values(state.players).map(p => `<li>👤 ${p.name}</li>`).join('');
+ content = `<h4>Players (${Object.keys(state.players).length}/20):</h4><ul>${playerList}</ul>`;
+
+ if (Object.keys(state.players).length >= 2) {
+ content += `<button onclick="socket.emit('startGame')">Start Game</button>`;
+ } else {
+ content += `<p style="color: #aaa;">Waiting for at least 2 players...</p>`;
+ }
+ }
+ else {
+ document.getElementById('settings-box').style.display = 'none';
+ document.getElementById('secret-word-box').style.display = 'block';
+ document.getElementById('secret-word-box').innerHTML = `Your Role: <b>${me?.role.toUpperCase()}</b> | Your Word: <span style="color:#03dac6; font-size:18px;">${me?.word}</span>`;
+
+ if (state.phase === 'describing') {
+ document.getElementById('status-heading').innerText = `Round ${state.round} - Describing Phase`;
+ let currentTurnId = state.playerOrder[state.turnIndex];
+
+ if (currentTurnId === myId && me.isAlive) {
+ content = `<p>It's your turn to give a clue!</p>
+ <input type="text" id="clueInput" placeholder="Single-word clue">
+ <button onclick="submitClue()">Submit Clue</button>`;
+ } else {
+ let activePlayer = state.players[currentTurnId];
+ content = `<p>Waiting for <b>${activePlayer ? activePlayer.name : 'someone'}</b> to type a clue...</p>`;
+ }
+
+ content += `<h4>Clues Given So Far:</h4><ul>`;
+ for (let id in state.clues) {
+ content += `<li><b>${state.players[id]?.name}:</b> ${state.clues[id]}</li>`;
+ }
+ content += `</ul>`;
+ }
+ else if (state.phase === 'voting') {
+ document.getElementById('status-heading').innerText = `Voting Phase (Vote Anyone)`;
+ if (me.isAlive) {
+ content = `<p>Select any player to vote out:</p>`;
+ Object.values(state.players).forEach(p => {
+ if (p.isAlive && p.id !== myId) {
+ content += `<button onclick="submitVote('${p.id}')">Vote Out ${p.name}</button><br>`;
+ }
+ });
+ } else {
+ content = `<p style="color:#ff5555;">You have been eliminated. Observing vote processing...</p>`;
+ }
+ }
+ else if (state.phase === 'mrWhiteGuess') {
+ document.getElementById('status-heading').innerText = `Mr. White Caught!`;
+ let mrWhitePlayer = Object.values(state.players).find(p => p.role === 'mrWhite');
+
+ if (mrWhitePlayer && mrWhitePlayer.id === myId) {
+ content = `<p>You were caught as Mr. White! Guess the secret civilian word to win solo:</p>
+ <input type="text" id="whiteGuessInput" placeholder="Enter secret word">
+ <button onclick="submitWhiteGuess()">Submit Guess</button>`;
+ } else {
+ content = `<p>Mr. White was caught and is typing their final guess...</p>`;
+ }
+ }
+ else if (state.phase === 'ended') {
+ document.getElementById('status-heading').innerText = `Game Over`;
+ content = `<h2 style="color:#ffbb33;">${state.winnerMessage}</h2><button onclick="location.reload()">Play Again</button>`;
+ }
+ }
+ document.getElementById('game-content').innerHTML = content;
+ });
+
+ function submitClue() {
+ const val = document.getElementById('clueInput').value;
+ if (val) socket.emit('submitClue', val);
+ }
+
+ function submitVote(targetId) {
+ socket.emit('submitVote', targetId);
+ }
+
+ function submitWhiteGuess() {
+ const val = document.getElementById('whiteGuessInput').value;
+ if (val) socket.emit('mrWhiteGuess', val);
+ }
+
+ socket.on('errorMsg', (msg) => alert(msg));
+ </script>
+</body>
+</html>
