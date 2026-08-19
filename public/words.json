@@ -1,0 +1,21 @@
+{
+  "wordPairs": [
+    { "civilian": "SHOWER", "undercover": "BATH" },
+    { "civilian": "APPLE", "undercover": "PEAR" },
+    { "civilian": "LAPTOP", "undercover": "TABLET" },
+    { "civilian": "COFFEE", "undercover": "TEA" },
+    { "civilian": "GUITAR", "undercover": "UKULELE" }
+  ],
+  "defaultGroup": {
+    "id": "g1",
+    "name": "V5",
+    "color": "#f43f5e",
+    "players": [
+      { "name": "Shivam", "color": "#22c55e" },
+      { "name": "Sneha", "color": "#38bdf8" },
+      { "name": "Mahima", "color": "#4ade80" },
+      { "name": "Dhanush", "color": "#0284c7" },
+      { "name": "Anand", "color": "#22d3ee" }
+    ]
+  }
+}
