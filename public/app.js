@@ -1,7 +1,9 @@
 let wordPairs = [
   { civilian: "SHOWER", undercover: "BATH" },
   { civilian: "APPLE", undercover: "PEAR" },
-  { civilian: "LAPTOP", undercover: "TABLET" }
+  { civilian: "LAPTOP", undercover: "TABLET" },
+  { civilian: "GUITAR", undercover: "UKULELE" },
+  { civilian: "COFFEE", undercover: "TEA" }
 ];
 
 let groups = [
@@ -82,7 +84,7 @@ function renderGroupsList() {
     const isSelected = group.id === selectedGroupId;
     container.innerHTML += `
       <div class="group-card" style="background: white; border-radius:16px; padding:12px; margin-bottom:12px;">
-        <div style="display:flex; justify-size:space-between; align-items:center;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
           <h3 style="color:${group.color}">${group.name} (${group.players.length} Players)</h3>
           <button class="icon-btn" onclick="openEditGroup('${group.id}')">✏️</button>
         </div>
@@ -160,10 +162,11 @@ function startGame() {
     return alert("Player count must be between 3 and 20.");
   }
 
-  // Shuffle players every new game
+  // 1. Shuffle player sequence for card picking order each game
   let players = [...activeGroup.players].sort(() => Math.random() - 0.5);
   currentWordPair = wordPairs[Math.floor(Math.random() * wordPairs.length)];
 
+  // 2. Re-assign secret roles randomly every game
   let roles = [];
   for (let i = 0; i < undercoverCount; i++) roles.push('UNDERCOVER');
   for (let i = 0; i < mrWhiteCount; i++) roles.push('MR_WHITE');
@@ -183,6 +186,7 @@ function startGame() {
   currentPickerIndex = 0;
   isVotingMode = false;
 
+  // Automatically update and show current player name
   renderCardsGrid();
   navigateTo('page-5');
 }
@@ -228,7 +232,6 @@ function closeCardModal() {
 // Description & Elimination Board
 function initDescriptionBoard() {
   isVotingMode = false;
-  // Reshuffle turn order for descriptions
   let activeOnly = activePlayers.filter(p => !p.eliminated).sort(() => Math.random() - 0.5);
   activeOnly.forEach((p, idx) => p.order = idx + 1);
 
@@ -281,7 +284,7 @@ function closeEliminateModal() {
   document.getElementById('eliminate-confirm-modal').classList.remove('active');
 }
 
-function confirmElimination() {
+function confirmElimination(targetRole) {
   closeEliminateModal();
   playerToEliminate.eliminated = true;
 
@@ -337,6 +340,11 @@ function triggerGameOver(message) {
   document.getElementById('game-over-title').innerText = "Game Over";
   document.getElementById('game-over-msg').innerText = message;
   document.getElementById('game-over-modal').classList.add('active');
+}
+
+function restartGameImmediately() {
+  document.getElementById('game-over-modal').classList.remove('active');
+  startGame();
 }
 
 document.addEventListener('DOMContentLoaded', initApp);

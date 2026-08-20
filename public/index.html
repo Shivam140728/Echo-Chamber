@@ -131,13 +131,16 @@
       </div>
     </div>
 
-    <!-- CONFIRM ELIMINATION MODAL -->
+    <!-- CONFIRM ELIMINATION MODAL (WITH ROLE TARGET SELECTION) -->
     <div class="modal-overlay" id="eliminate-confirm-modal">
       <div class="modal-card">
         <h3 id="elim-player-title" class="modal-player-title">Eliminate Player?</h3>
-        <div class="modal-actions-row">
+        <p class="modal-subtitle">Are you eliminating this player as Mr. White or Undercover?</p>
+        
+        <div class="modal-actions-row flex-column">
+          <button class="primary-btn dark-btn" onclick="confirmElimination('MR_WHITE')">Eliminate as Mr. White ⚪</button>
+          <button class="primary-btn dark-btn" onclick="confirmElimination('UNDERCOVER')">Eliminate as Undercover 🕵️</button>
           <button class="secondary-btn" onclick="closeEliminateModal()">Cancel</button>
-          <button class="primary-btn danger-btn" onclick="confirmElimination()">Eliminate</button>
         </div>
       </div>
     </div>
@@ -167,7 +170,7 @@
       <div class="modal-card">
         <h2 id="game-over-title" class="modal-player-title">Game Over</h2>
         <p id="game-over-msg" class="modal-subtitle"></p>
-        <button class="primary-btn" onclick="navigateTo('page-2')">Play Again</button>
+        <button class="primary-btn" onclick="restartGameImmediately()">Play Again</button>
       </div>
     </div>
 
