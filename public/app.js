@@ -1,10 +1,14 @@
-let wordPairs = [
-  { civilian: "SHOWER", undercover: "BATH" },
-  { civilian: "APPLE", undercover: "PEAR" },
-  { civilian: "LAPTOP", undercover: "TABLET" },
-  { civilian: "GUITAR", undercover: "UKULELE" },
-  { civilian: "COFFEE", undercover: "TEA" }
+// Categorized Word Pool with automatic non-repeating deck shuffle
+const wordCategories = [
+  { category: "Transport", pairs: [{ civilian: "ESCALATOR", undercover: "ELEVATOR" }, { civilian: "CAR", undercover: "MOTORBIKE" }] },
+  { category: "Food & Drink", pairs: [{ civilian: "COFFEE", undercover: "TEA" }, { civilian: "APPLE", undercover: "PEAR" }, { civilian: "BURGER", undercover: "SANDWICH" }] },
+  { category: "Technology", pairs: [{ civilian: "LAPTOP", undercover: "TABLET" }, { civilian: "HEADPHONES", undercover: "EARBUDS" }] },
+  { category: "Music & Art", pairs: [{ civilian: "GUITAR", undercover: "UKULELE" }, { civilian: "PIANO", undercover: "ORGAN" }] },
+  { category: "Objects", pairs: [{ civilian: "SHOWER", undercover: "BATH" }, { civilian: "PENCIL", undercover: "PEN" }] }
 ];
+
+let unusedPairsDeck = [];
+let winningTeam = ""; // 'CIVILIANS' or 'INFILTRATORS'
 
 let groups = [
   {
@@ -35,8 +39,27 @@ let activePlayers = [];
 let isVotingMode = false;
 let playerToEliminate = null;
 
+// Populate and shuffle word pairs without repetition
+function initializeWordDeck() {
+  unusedPairsDeck = [];
+  wordCategories.forEach(cat => {
+    cat.pairs.forEach(pair => {
+      unusedPairsDeck.push({ ...pair, category: cat.category });
+    });
+  });
+  unusedPairsDeck.sort(() => Math.random() - 0.5);
+}
+
+function getNextWordPair() {
+  if (unusedPairsDeck.length === 0) {
+    initializeWordDeck();
+  }
+  return unusedPairsDeck.pop();
+}
+
 // Initialize
 function initApp() {
+  initializeWordDeck();
   updateSetupUI();
 }
 
@@ -70,9 +93,9 @@ function updateSetupUI() {
   const civilians = Math.max(0, total - undercoverCount - mrWhiteCount);
 
   document.getElementById('setup-player-count').innerText = `Players: ${total}`;
-  document.getElementById('label-civilians').innerText = `${civilians} Civilians`;
-  document.getElementById('label-undercover').innerText = `${undercoverCount} Undercover`;
-  document.getElementById('label-mrwhite').innerText = `${mrWhiteCount} Mr. White`;
+  document.getElementById('label-civilians').innerText = `👤 ${civilians} Civilians`;
+  document.getElementById('label-undercover').innerText = `🕵️ ${undercoverCount} Undercover`;
+  document.getElementById('label-mrwhite').innerText = `🕵️‍♂️ ${mrWhiteCount} Mr. White`;
 }
 
 // Group Management
@@ -162,11 +185,9 @@ function startGame() {
     return alert("Player count must be between 3 and 20.");
   }
 
-  // 1. Shuffle player sequence for card picking order each game
   let players = [...activeGroup.players].sort(() => Math.random() - 0.5);
-  currentWordPair = wordPairs[Math.floor(Math.random() * wordPairs.length)];
+  currentWordPair = getNextWordPair();
 
-  // 2. Re-assign secret roles randomly every game
   let roles = [];
   for (let i = 0; i < undercoverCount; i++) roles.push('UNDERCOVER');
   for (let i = 0; i < mrWhiteCount; i++) roles.push('MR_WHITE');
@@ -186,7 +207,6 @@ function startGame() {
   currentPickerIndex = 0;
   isVotingMode = false;
 
-  // Automatically update and show current player name
   renderCardsGrid();
   navigateTo('page-5');
 }
@@ -288,7 +308,8 @@ function confirmElimination(targetRole) {
   closeEliminateModal();
   playerToEliminate.eliminated = true;
 
-  document.getElementById('result-role-title').innerText = `${playerToEliminate.role.replace('_', ' ')} ELIMINATED!`;
+  const icon = playerToEliminate.role === 'CIVILIAN' ? '👤' : (playerToEliminate.role === 'UNDERCOVER' ? '🕵️' : '🕵️‍♂️');
+  document.getElementById('result-role-title').innerText = `${icon} ${playerToEliminate.role.replace('_', ' ')} ELIMINATED!`;
   document.getElementById('result-avatar').style.background = playerToEliminate.color;
   document.getElementById('result-avatar').innerText = playerToEliminate.name[0];
   document.getElementById('result-player-name').innerText = playerToEliminate.name;
@@ -312,7 +333,8 @@ function submitMrWhiteGuess() {
   document.getElementById('mrwhite-guess-modal').classList.remove('active');
 
   if (guess === currentWordPair.civilian.toUpperCase()) {
-    triggerGameOver("Mr. White Guessed correctly! Mr. White Wins!");
+    winningTeam = 'INFILTRATORS';
+    triggerGameOver("Mr. White guessed correctly!");
   } else {
     alert("Incorrect Guess! Game continues.");
     checkWinConditions();
@@ -324,12 +346,14 @@ function checkWinConditions() {
   const remainingInfiltrators = remaining.filter(p => p.role === 'MR_WHITE' || p.role === 'UNDERCOVER');
 
   if (remainingInfiltrators.length === 0) {
-    triggerGameOver("All Infiltrators eliminated! Civilians Win!");
+    winningTeam = 'CIVILIANS';
+    triggerGameOver("All Infiltrators eliminated!");
     return;
   }
 
   if (remaining.length <= 2 && remainingInfiltrators.length > 0) {
-    triggerGameOver("Only 2 players remain! Mr. White/Undercover Wins!");
+    winningTeam = 'INFILTRATORS';
+    triggerGameOver("Infiltrators achieved majority!");
     return;
   }
 
@@ -337,14 +361,44 @@ function checkWinConditions() {
 }
 
 function triggerGameOver(message) {
-  document.getElementById('game-over-title').innerText = "Game Over";
+  const titleText = winningTeam === 'CIVILIANS' ? "The Civilians win!" : "The Infiltrators win!";
+  document.getElementById('game-over-title').innerText = titleText;
   document.getElementById('game-over-msg').innerText = message;
   document.getElementById('game-over-modal').classList.add('active');
 }
 
-function restartGameImmediately() {
+function goToSummaryPage() {
   document.getElementById('game-over-modal').classList.remove('active');
-  startGame();
+
+  document.getElementById('summary-title').innerText = winningTeam === 'CIVILIANS' ? "The Civilians win! 🎉" : "The Infiltrators win! 🏆";
+  document.getElementById('sum-civilian-word').innerText = currentWordPair.civilian;
+  document.getElementById('sum-undercover-word').innerText = currentWordPair.undercover;
+
+  const list = document.getElementById('summary-players-list');
+  list.innerHTML = '';
+
+  activePlayers.forEach(p => {
+    let icon = '👤';
+    if (p.role === 'UNDERCOVER') icon = '🕵️';
+    if (p.role === 'MR_WHITE') icon = '🕵️‍♂️';
+
+    const isWinner = (winningTeam === 'CIVILIANS' && p.role === 'CIVILIAN') || (winningTeam === 'INFILTRATORS' && p.role !== 'CIVILIAN');
+
+    list.innerHTML += `
+      <div class="summary-row ${isWinner ? 'winner-row' : ''} ${p.eliminated ? 'eliminated-row' : ''}">
+        <div class="summary-player-info">
+          <div class="avatar-bubble" style="background:${p.color}; width:36px; height:36px; font-size:14px;">${p.name[0]}</div>
+          <div>
+            <div style="font-weight:700; font-size:14px;">${p.name} ${p.eliminated ? '(Eliminated)' : ''}</div>
+            <div style="font-size:11px; color:#64748b;">Word: ${p.word}</div>
+          </div>
+        </div>
+        <div class="role-badge-icon">${icon}</div>
+      </div>
+    `;
+  });
+
+  navigateTo('page-7');
 }
 
 document.addEventListener('DOMContentLoaded', initApp);

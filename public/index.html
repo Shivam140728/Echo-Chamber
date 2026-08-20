@@ -35,19 +35,19 @@
       <div class="role-card-box">
         <div class="counter-row">
           <div></div>
-          <div class="pill-btn pill-civilians" id="label-civilians">3 Civilians</div>
+          <div class="pill-btn pill-civilians" id="label-civilians">👤 3 Civilians</div>
           <div></div>
         </div>
 
         <div class="counter-row">
           <button class="counter-btn" onclick="adjustRole('undercover', -1)">-</button>
-          <div class="pill-btn pill-undercover" id="label-undercover">1 Undercover</div>
+          <div class="pill-btn pill-undercover" id="label-undercover">🕵️ 1 Undercover</div>
           <button class="counter-btn" onclick="adjustRole('undercover', 1)">+</button>
         </div>
 
         <div class="counter-row">
           <button class="counter-btn" onclick="adjustRole('mrWhite', -1)">-</button>
-          <div class="pill-btn pill-mrwhite" id="label-mrwhite">1 Mr. White</div>
+          <div class="pill-btn pill-mrwhite" id="label-mrwhite">🕵️‍♂️ 1 Mr. White</div>
           <button class="counter-btn" onclick="adjustRole('mrWhite', 1)">+</button>
         </div>
       </div>
@@ -100,14 +100,14 @@
     <div id="page-6" class="page">
       <div class="board-header">
         <h2 id="board-title" class="board-title">Description Time</h2>
-        <p id="board-subtitle" class="board-subtitle">Describe your secret word in the indicated order, using just a word or phrase.</p>
+        <p id="board-subtitle" class="board-subtitle">Describe your secret word in order using a word or phrase.</p>
       </div>
 
       <div class="status-banner">
         <div class="status-box">
-          <span class="status-label">Remaining infiltrators</span>
+          <span class="status-label">Remaining Infiltrators</span>
           <div class="status-counts">
-            <span>⚪ <b id="count-mrwhite">1</b></span>
+            <span>🕵️‍♂️ <b id="count-mrwhite">1</b></span>
             <span>🕵️ <b id="count-undercover">1</b></span>
           </div>
         </div>
@@ -118,6 +118,21 @@
       <div class="board-footer">
         <button id="vote-action-btn" class="primary-btn orange-btn" onclick="toggleVoteMode()">Go to Vote</button>
       </div>
+    </div>
+
+    <!-- PAGE 7: FINAL SUMMARY PAGE -->
+    <div id="page-7" class="page">
+      <div class="summary-header">
+        <h2 id="summary-title" class="summary-title">The Infiltrators win!</h2>
+        <div class="summary-words-box">
+          <p>👤 Civilian Word: <b id="sum-civilian-word">ESCALATOR</b></p>
+          <p>🕵️ Undercover Word: <b id="sum-undercover-word">ELEVATOR</b></p>
+        </div>
+      </div>
+
+      <div id="summary-players-list" class="summary-players-list"></div>
+
+      <button class="primary-btn summary-btn" onclick="navigateTo('page-2')">Play Again</button>
     </div>
 
     <!-- SECRET WORD REVEAL MODAL -->
@@ -131,14 +146,14 @@
       </div>
     </div>
 
-    <!-- CONFIRM ELIMINATION MODAL (WITH ROLE TARGET SELECTION) -->
+    <!-- CONFIRM ELIMINATION MODAL -->
     <div class="modal-overlay" id="eliminate-confirm-modal">
       <div class="modal-card">
         <h3 id="elim-player-title" class="modal-player-title">Eliminate Player?</h3>
         <p class="modal-subtitle">Are you eliminating this player as Mr. White or Undercover?</p>
         
         <div class="modal-actions-row flex-column">
-          <button class="primary-btn dark-btn" onclick="confirmElimination('MR_WHITE')">Eliminate as Mr. White ⚪</button>
+          <button class="primary-btn dark-btn" onclick="confirmElimination('MR_WHITE')">Eliminate as Mr. White 🕵️‍♂️</button>
           <button class="primary-btn dark-btn" onclick="confirmElimination('UNDERCOVER')">Eliminate as Undercover 🕵️</button>
           <button class="secondary-btn" onclick="closeEliminateModal()">Cancel</button>
         </div>
@@ -165,12 +180,17 @@
       </div>
     </div>
 
-    <!-- GAME OVER MODAL -->
+    <!-- GAME OVER / WINNING BANNER MODAL -->
     <div class="modal-overlay" id="game-over-modal">
-      <div class="modal-card">
-        <h2 id="game-over-title" class="modal-player-title">Game Over</h2>
-        <p id="game-over-msg" class="modal-subtitle"></p>
-        <button class="primary-btn" onclick="restartGameImmediately()">Play Again</button>
+      <div class="modal-card banner-card">
+        <div class="trophy-badge">🏆</div>
+        <div class="spy-illustration">
+          <span class="spy-icon-large">🕵️</span>
+          <span class="spy-icon-large">🕵️‍♂️</span>
+        </div>
+        <div class="win-ribbon" id="game-over-title">The Infiltrators win!</div>
+        <p id="game-over-msg" class="modal-subtitle" style="margin-top: 10px;"></p>
+        <button class="primary-btn" onclick="goToSummaryPage()" style="margin-top: 15px;">View Game Results</button>
       </div>
     </div>
 
