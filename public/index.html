@@ -33,21 +33,18 @@
       <div class="player-count-title" id="setup-player-count">Players: 5</div>
 
       <div class="role-card-box">
-        <!-- Civilians -->
         <div class="counter-row">
           <div></div>
           <div class="pill-btn pill-civilians" id="label-civilians">3 Civilians</div>
           <div></div>
         </div>
 
-        <!-- Undercover -->
         <div class="counter-row">
           <button class="counter-btn" onclick="adjustRole('undercover', -1)">-</button>
           <div class="pill-btn pill-undercover" id="label-undercover">1 Undercover</div>
           <button class="counter-btn" onclick="adjustRole('undercover', 1)">+</button>
         </div>
 
-        <!-- Mr. White -->
         <div class="counter-row">
           <button class="counter-btn" onclick="adjustRole('mrWhite', -1)">-</button>
           <div class="pill-btn pill-mrwhite" id="label-mrwhite">1 Mr. White</div>
@@ -58,20 +55,18 @@
       <button class="primary-btn" onclick="startGame()">Start</button>
     </div>
 
-    <!-- PAGE 3: SELECT GROUP PAGE -->
+    <!-- PAGE 3: GROUPS PAGE -->
     <div id="page-3" class="page">
       <div class="header-bar">
         <h2 class="section-title">Groups</h2>
         <button class="icon-btn add-btn" onclick="openCreateGroup()">＋</button>
       </div>
       <p class="subtitle">Select or edit player groups for your game.</p>
-
       <div id="groups-container"></div>
-
       <button class="icon-btn close-floating-btn" onclick="navigateTo('page-2')">✕</button>
     </div>
 
-    <!-- PAGE 4: EDIT / CREATE GROUP PAGE -->
+    <!-- PAGE 4: EDIT GROUP PAGE -->
     <div id="page-4" class="page">
       <div class="header-bar">
         <button class="icon-btn" onclick="navigateTo('page-3')">←</button>
@@ -80,8 +75,7 @@
       </div>
 
       <div class="edit-card-box">
-        <h4 class="edit-subtitle">Add, remove or reorder players</h4>
-        
+        <h4 class="edit-subtitle">Add, remove or reorder players (3 - 20)</h4>
         <div id="edit-players-list" class="player-list-edit"></div>
 
         <div class="add-player-row" onclick="addPlayerToGroup()">
@@ -93,31 +87,92 @@
       </div>
     </div>
 
-    <!-- PAGE 5: CARD SELECTION -->
+    <!-- PAGE 5: CARD SELECTION PAGE -->
     <div id="page-5" class="page">
       <div class="header-bar picker-header">
-        <h3 id="current-picker-name" class="picker-name">Shivam</h3>
+        <h3 id="current-picker-name" class="picker-name">Player</h3>
         <p class="picker-subtitle">Please pick a card</p>
       </div>
-
       <div class="cards-grid" id="cards-grid"></div>
+    </div>
+
+    <!-- PAGE 6: DESCRIPTION & VOTING BOARD -->
+    <div id="page-6" class="page">
+      <div class="board-header">
+        <h2 id="board-title" class="board-title">Description Time</h2>
+        <p id="board-subtitle" class="board-subtitle">Describe your secret word in the indicated order, using just a word or phrase.</p>
+      </div>
+
+      <div class="status-banner">
+        <div class="status-box">
+          <span class="status-label">Remaining infiltrators</span>
+          <div class="status-counts">
+            <span>⚪ <b id="count-mrwhite">1</b></span>
+            <span>🕵️ <b id="count-undercover">1</b></span>
+          </div>
+        </div>
+      </div>
+
+      <div id="players-board-grid" class="players-board-grid"></div>
+
+      <div class="board-footer">
+        <button id="vote-action-btn" class="primary-btn orange-btn" onclick="toggleVoteMode()">Go to Vote</button>
+      </div>
     </div>
 
     <!-- SECRET WORD REVEAL MODAL -->
     <div class="modal-overlay" id="card-modal">
       <div class="modal-card">
-        <div class="avatar-bubble modal-avatar" id="modal-avatar">S</div>
-        <h3 id="modal-player-name" class="modal-player-title">Shivam</h3>
+        <div class="avatar-bubble modal-avatar" id="modal-avatar">?</div>
+        <h3 id="modal-player-name" class="modal-player-title">Player</h3>
         <p class="modal-subtitle">Your secret word is</p>
-        
-        <div class="secret-word-box" id="modal-secret-word">SHOWER</div>
-
+        <div class="secret-word-box" id="modal-secret-word">WORD</div>
         <button class="primary-btn modal-ok-btn" onclick="closeCardModal()">OK</button>
+      </div>
+    </div>
+
+    <!-- CONFIRM ELIMINATION MODAL -->
+    <div class="modal-overlay" id="eliminate-confirm-modal">
+      <div class="modal-card">
+        <h3 id="elim-player-title" class="modal-player-title">Eliminate Player?</h3>
+        <div class="modal-actions-row">
+          <button class="secondary-btn" onclick="closeEliminateModal()">Cancel</button>
+          <button class="primary-btn danger-btn" onclick="confirmElimination()">Eliminate</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESULT MODAL -->
+    <div class="modal-overlay" id="result-modal">
+      <div class="modal-card">
+        <h2 id="result-role-title" class="modal-player-title">A Civilian has been eliminated!</h2>
+        <div class="avatar-bubble modal-avatar" id="result-avatar">P</div>
+        <h3 id="result-player-name" class="modal-player-title">Name</h3>
+        <button class="primary-btn modal-ok-btn" onclick="handleResultModalOk()">OK</button>
+      </div>
+    </div>
+
+    <!-- MR WHITE GUESS MODAL -->
+    <div class="modal-overlay" id="mrwhite-guess-modal">
+      <div class="modal-card">
+        <h3>Mr. White's Guess</h3>
+        <p class="modal-subtitle">Guess the Civilian secret word to win!</p>
+        <input type="text" id="mrwhite-word-input" class="group-name-input input-bordered" placeholder="Enter word...">
+        <button class="primary-btn" onclick="submitMrWhiteGuess()">Submit Guess</button>
+      </div>
+    </div>
+
+    <!-- GAME OVER MODAL -->
+    <div class="modal-overlay" id="game-over-modal">
+      <div class="modal-card">
+        <h2 id="game-over-title" class="modal-player-title">Game Over</h2>
+        <p id="game-over-msg" class="modal-subtitle"></p>
+        <button class="primary-btn" onclick="navigateTo('page-2')">Play Again</button>
       </div>
     </div>
 
   </div>
 
-  <script src="script.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
