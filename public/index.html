@@ -23,7 +23,7 @@
     <!-- PAGE 2: GAME SETUP PAGE -->
     <div id="page-2" class="page">
       <div class="header-bar">
-        <div></div>
+        <button class="icon-btn" onclick="goBack()">←</button>
         <div class="groups-badge" onclick="navigateTo('page-3')">
           <div class="groups-icon">👥</div>
           <span class="groups-label">Groups</span>
@@ -58,6 +58,7 @@
     <!-- PAGE 3: GROUPS PAGE -->
     <div id="page-3" class="page">
       <div class="header-bar">
+        <button class="icon-btn" onclick="goBack()">←</button>
         <h2 class="section-title">Groups</h2>
         <button class="icon-btn add-btn" onclick="openCreateGroup()">＋</button>
       </div>
@@ -69,7 +70,7 @@
     <!-- PAGE 4: EDIT GROUP PAGE -->
     <div id="page-4" class="page">
       <div class="header-bar">
-        <button class="icon-btn" onclick="navigateTo('page-3')">←</button>
+        <button class="icon-btn" onclick="goBack()">←</button>
         <input type="text" id="edit-group-name" value="New Group" class="group-name-input">
         <div></div>
       </div>
@@ -90,7 +91,11 @@
     <!-- PAGE 5: CARD SELECTION PAGE -->
     <div id="page-5" class="page">
       <div class="header-bar picker-header">
-        <h3 id="current-picker-name" class="picker-name">Player</h3>
+        <div class="picker-top-bar">
+          <button class="icon-btn" onclick="confirmQuitGame()">←</button>
+          <h3 id="current-picker-name" class="picker-name">Player</h3>
+          <div></div>
+        </div>
         <p class="picker-subtitle">Please pick a card</p>
       </div>
       <div class="cards-grid" id="cards-grid"></div>
@@ -98,6 +103,12 @@
 
     <!-- PAGE 6: DESCRIPTION & VOTING BOARD -->
     <div id="page-6" class="page">
+      <div class="header-bar" style="margin-bottom:8px;">
+        <button class="icon-btn" onclick="confirmQuitGame()">←</button>
+        <div></div>
+        <div></div>
+      </div>
+
       <div class="board-header">
         <h2 id="board-title" class="board-title">Description Time</h2>
         <p id="board-subtitle" class="board-subtitle">Describe your secret word in order using a word or phrase.</p>
@@ -122,6 +133,12 @@
 
     <!-- PAGE 7: FINAL SUMMARY PAGE -->
     <div id="page-7" class="page">
+      <div class="header-bar" style="margin-bottom:8px;">
+        <button class="icon-btn" onclick="navigateTo('page-2')">←</button>
+        <div></div>
+        <div></div>
+      </div>
+
       <div class="summary-header">
         <h2 id="summary-title" class="summary-title">The Infiltrators win!</h2>
         <div class="summary-words-box">
@@ -180,6 +197,15 @@
       </div>
     </div>
 
+    <!-- MR WHITE WRONG GUESS MODAL -->
+    <div class="modal-overlay" id="mrwhite-wrong-modal">
+      <div class="modal-card">
+        <h3>Incorrect Guess! ❌</h3>
+        <p class="modal-subtitle">Mr. White guessed wrong. The game continues!</p>
+        <button class="primary-btn" onclick="closeMrWhiteWrongModal()">Continue Game</button>
+      </div>
+    </div>
+
     <!-- GAME OVER / WINNING BANNER MODAL -->
     <div class="modal-overlay" id="game-over-modal">
       <div class="modal-card banner-card">
@@ -189,8 +215,8 @@
           <span class="spy-icon-large">🕵️‍♂️</span>
         </div>
         <div class="win-ribbon" id="game-over-title">The Infiltrators win!</div>
-        <p id="game-over-msg" class="modal-subtitle" style="margin-top: 10px;"></p>
-        <button class="primary-btn" onclick="goToSummaryPage()" style="margin-top: 15px;">View Game Results</button>
+        <p id="game-over-msg" class="modal-subtitle" style="margin-top: 10px; color: white;"></p>
+        <button class="primary-btn" onclick="goToSummaryPage()" style="margin-top: 15px; background: white; color: #ef4444;">View Game Results</button>
       </div>
     </div>
 

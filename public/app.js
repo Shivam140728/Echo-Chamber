@@ -8,7 +8,8 @@ const wordCategories = [
 ];
 
 let unusedPairsDeck = [];
-let winningTeam = ""; // 'CIVILIANS' or 'INFILTRATORS'
+let winningTeam = ""; 
+let pageHistory = [];
 
 let groups = [
   {
@@ -39,6 +40,22 @@ let activePlayers = [];
 let isVotingMode = false;
 let playerToEliminate = null;
 
+// LocalStorage Persistence Helpers
+function saveGroupsToStorage() {
+  localStorage.setItem('undercover_groups', JSON.stringify(groups));
+}
+
+function loadGroupsFromStorage() {
+  const stored = localStorage.getItem('undercover_groups');
+  if (stored) {
+    try {
+      groups = JSON.parse(stored);
+    } catch (e) {
+      console.error("Failed to parse saved groups:", e);
+    }
+  }
+}
+
 // Populate and shuffle word pairs without repetition
 function initializeWordDeck() {
   unusedPairsDeck = [];
@@ -59,16 +76,39 @@ function getNextWordPair() {
 
 // Initialize
 function initApp() {
+  loadGroupsFromStorage();
   initializeWordDeck();
   updateSetupUI();
 }
 
-// Navigation
-function navigateTo(pageId) {
+// Navigation with Page History Tracking
+function navigateTo(pageId, isBack = false) {
+  const currentActive = document.querySelector('.page.active');
+  if (currentActive && !isBack) {
+    pageHistory.push(currentActive.id);
+  }
+
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById(pageId).classList.add('active');
+
   if (pageId === 'page-2') updateSetupUI();
   if (pageId === 'page-3') renderGroupsList();
+}
+
+function goBack() {
+  if (pageHistory.length > 0) {
+    const previousPage = pageHistory.pop();
+    navigateTo(previousPage, true);
+  } else {
+    navigateTo('page-1', true);
+  }
+}
+
+function confirmQuitGame() {
+  if (confirm("Are you sure you want to quit the current game?")) {
+    pageHistory = [];
+    navigateTo('page-2');
+  }
 }
 
 // Setup Page Logic
@@ -98,7 +138,7 @@ function updateSetupUI() {
   document.getElementById('label-mrwhite').innerText = `🕵️‍♂️ ${mrWhiteCount} Mr. White`;
 }
 
-// Group Management
+// Group Management & Persistent Saving
 function renderGroupsList() {
   const container = document.getElementById('groups-container');
   container.innerHTML = '';
@@ -106,7 +146,7 @@ function renderGroupsList() {
   groups.forEach(group => {
     const isSelected = group.id === selectedGroupId;
     container.innerHTML += `
-      <div class="group-card" style="background: white; border-radius:16px; padding:12px; margin-bottom:12px;">
+      <div class="group-card" style="background: white; border-radius:16px; padding:12px; margin-bottom:12px; box-shadow:0 2px 4px rgba(0,0,0,0.05);">
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <h3 style="color:${group.color}">${group.name} (${group.players.length} Players)</h3>
           <button class="icon-btn" onclick="openEditGroup('${group.id}')">✏️</button>
@@ -144,8 +184,8 @@ function renderEditGroup() {
 
   editingGroup.players.forEach((p, idx) => {
     list.innerHTML += `
-      <div class="counter-row">
-        <span>${p.name}</span>
+      <div class="counter-row" style="background:white; padding:8px 12px; border-radius:12px; margin-bottom:6px;">
+        <span style="font-weight:700;">${p.name}</span>
         <button class="icon-btn" onclick="removePlayerFromGroup(${idx})">🗑️</button>
       </div>
     `;
@@ -170,11 +210,16 @@ function removePlayerFromGroup(index) {
 function saveGroupChanges() {
   if (editingGroup.players.length < 3) return alert("Group must have at least 3 players.");
   editingGroup.name = document.getElementById('edit-group-name').value.trim() || 'Group';
+  
   const index = groups.findIndex(g => g.id === editingGroup.id);
-  if (index >= 0) groups[index] = editingGroup;
-  else groups.push(editingGroup);
+  if (index >= 0) {
+    groups[index] = editingGroup;
+  } else {
+    groups.push(editingGroup);
+  }
 
   selectedGroupId = editingGroup.id;
+  saveGroupsToStorage();
   navigateTo('page-3');
 }
 
@@ -253,8 +298,18 @@ function closeCardModal() {
 function initDescriptionBoard() {
   isVotingMode = false;
   let activeOnly = activePlayers.filter(p => !p.eliminated).sort(() => Math.random() - 0.5);
-  activeOnly.forEach((p, idx) => p.order = idx + 1);
 
+  // RULE: First person to describe CANNOT be Mr. White
+  if (activeOnly.length > 1 && activeOnly[0].role === 'MR_WHITE') {
+    const nonWhiteIdx = activeOnly.findIndex(p => p.role !== 'MR_WHITE');
+    if (nonWhiteIdx !== -1) {
+      const temp = activeOnly[0];
+      activeOnly[0] = activeOnly[nonWhiteIdx];
+      activeOnly[nonWhiteIdx] = temp;
+    }
+  }
+
+  activeOnly.forEach((p, idx) => p.order = idx + 1);
   renderBoardUI();
 }
 
@@ -336,9 +391,13 @@ function submitMrWhiteGuess() {
     winningTeam = 'INFILTRATORS';
     triggerGameOver("Mr. White guessed correctly!");
   } else {
-    alert("Incorrect Guess! Game continues.");
-    checkWinConditions();
+    document.getElementById('mrwhite-wrong-modal').classList.add('active');
   }
+}
+
+function closeMrWhiteWrongModal() {
+  document.getElementById('mrwhite-wrong-modal').classList.remove('active');
+  checkWinConditions();
 }
 
 function checkWinConditions() {
