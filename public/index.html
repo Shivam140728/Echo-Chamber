@@ -10,13 +10,99 @@
 
   <div class="app-container">
 
-    <!-- PAGE 1: FRONT PAGE -->
+    <!-- PAGE 1: HOME PAGE -->
     <div id="page-1" class="page active">
-      <div class="logo-container">
-        <div class="logo-title">UNDER<br>COVER</div>
+      <div class="p1-top-bar">
+        <div class="brand-logo"><span class="brand-w">W</span> MR. WHITE</div>
+        <div class="fresh-pill">965 FRESH</div>
       </div>
-      <div class="play-card-btn" onclick="navigateTo('page-2')">
-        <div class="play-icon"></div>
+
+      <div class="hero-card">
+        <span class="hero-sub">PASS THE PHONE · TRUST NO ONE</span>
+        <h1 class="hero-title">Same room.<br><span class="highlight-orange">Different truths.</span></h1>
+        <p class="hero-desc">Find the Spy. Expose Mr White. Try not to look suspicious.</p>
+        
+        <button class="primary-btn white-btn start-game-btn" onclick="startNewGameFromHome()">
+          Start a new game ➔
+        </button>
+
+        <div class="hero-stats">
+          <div class="stat-item"><b>5–20</b><span>PLAYERS</span></div>
+          <div class="stat-item"><b>1,000</b><span>WORD PAIRS</span></div>
+          <div class="stat-item"><b>10</b><span>CATEGORIES</span></div>
+        </div>
+      </div>
+
+      <div class="section-title-row">
+        <div>
+          <span class="section-tag">DON'T LOSE THE PLOT</span>
+          <h2 class="section-heading">Continue playing</h2>
+        </div>
+        <span class="count-badge-green">2</span>
+      </div>
+
+      <div class="continue-card" onclick="navigateTo('page-6')">
+        <div class="continue-badge">1</div>
+        <div class="continue-info">
+          <h3>Office</h3>
+          <p>10 categories · 6 players</p>
+        </div>
+        <div class="continue-action">
+          <span class="action-tag">REVEAL</span>
+          <span class="arrow">➔</span>
+        </div>
+      </div>
+
+      <div class="continue-card" onclick="navigateTo('page-6')">
+        <div class="continue-badge">1</div>
+        <div class="continue-info">
+          <h3>Bangalore Friends</h3>
+          <p>10 categories · 5 players</p>
+        </div>
+        <div class="continue-action">
+          <span class="action-tag">DISCUSSION</span>
+          <span class="arrow">➔</span>
+        </div>
+      </div>
+
+      <div class="section-title-row" style="margin-top: 16px;">
+        <div>
+          <span class="section-tag">YOUR CREWS</span>
+          <h2 class="section-heading">Ready teams</h2>
+        </div>
+      </div>
+
+      <div class="teams-horizontal-scroll">
+        <div class="team-card">
+          <div class="team-avatar orange">O</div>
+          <h4>Office</h4>
+          <p>9 players</p>
+        </div>
+        <div class="team-card">
+          <div class="team-avatar purple">T5</div>
+          <h4>Team 5</h4>
+          <p>6 players</p>
+        </div>
+        <div class="team-card">
+          <div class="team-avatar teal">BF</div>
+          <h4>Bangalore Friends</h4>
+          <p>5 players</p>
+        </div>
+      </div>
+
+      <div class="leaderboard-card">
+        <div>
+          <span class="lb-tag">LEADERBOARD</span>
+          <h3>MB</h3>
+          <p>43 points · 20 wins</p>
+        </div>
+        <div class="trophy-icon">🏆</div>
+      </div>
+
+      <div class="p1-bottom-nav">
+        <div class="nav-item active"><span class="nav-icon">🏠</span><span>HOME</span></div>
+        <div class="nav-item"><span class="nav-icon">🏆</span><span>SCORES</span></div>
+        <div class="nav-item"><span class="nav-icon">⚙️</span><span>RULES</span></div>
       </div>
     </div>
 
@@ -39,7 +125,7 @@
             <p class="step-desc">Saved for future rematches and scores.</p>
           </div>
         </div>
-        <input type="text" id="team-name-input" class="stylish-input" value="Team 5" onchange="updateTeamName(this.value)">
+        <input type="text" id="team-name-input" class="stylish-input" placeholder="Friday Night Suspects" onchange="updateTeamName(this.value)">
       </div>
 
       <!-- STEP 2: SUSPECTS -->
@@ -50,7 +136,7 @@
             <h3 class="step-title">Add the suspects</h3>
             <p class="step-desc">5 minimum · 20 maximum</p>
           </div>
-          <span class="badge-count" id="badge-player-count">5</span>
+          <span class="badge-count" id="badge-player-count">0</span>
         </div>
 
         <div id="suspects-list-container" class="suspects-list"></div>
@@ -114,23 +200,12 @@
             <button class="cnt-btn" onclick="adjustRole('mrWhite', 1)">+</button>
           </div>
         </div>
-
-        <div class="fresh-toggle-row">
-          <div class="fresh-info">
-            <span class="fresh-title">🔄 Keep words fresh</span>
-            <span class="fresh-sub">Never repeat a previously used word</span>
-          </div>
-          <label class="switch">
-            <input type="checkbox" id="ai-mode-switch" checked onchange="toggleAIMode(this.checked)">
-            <span class="slider round"></span>
-          </label>
-        </div>
       </div>
 
-      <button class="primary-btn black-btn" onclick="startGame()">
+      <button class="primary-btn black-btn" id="deal-roles-btn" onclick="startGame()">
         Deal the secret roles ➔
       </button>
-      <p class="game-footer-summary" id="footer-summary-text">5 players · 1 Spy · 1 Mr White</p>
+      <p class="game-footer-summary" id="footer-summary-text">0 players · 1 Spy · 1 Mr White</p>
     </div>
 
     <!-- PAGE 5: CARD SELECTION -->
@@ -213,7 +288,6 @@
       <div class="modal-card">
         <h3 id="elim-player-title" class="modal-player-title">Eliminate Player?</h3>
         <p class="modal-subtitle">Select infiltrator role for elimination:</p>
-        
         <div class="modal-actions-row flex-column" id="elimination-options-container"></div>
       </div>
     </div>
@@ -251,9 +325,7 @@
     <div class="modal-overlay" id="game-over-modal">
       <div class="modal-card banner-card">
         <div class="trophy-badge">🏆</div>
-        <div class="spy-illustration">
-          <span class="spy-icon-large">🎉</span>
-        </div>
+        <div class="spy-illustration"><span class="spy-icon-large">🎉</span></div>
         <div class="win-ribbon" id="game-over-title">The Civilians win!</div>
         <p id="game-over-msg" class="modal-subtitle" style="margin-top: 10px; color: white;"></p>
         <button class="primary-btn" onclick="goToSummaryPage()" style="margin-top: 15px; background: white; color: #ef4444;">View Game Results</button>

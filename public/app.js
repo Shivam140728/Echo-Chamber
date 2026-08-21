@@ -1,37 +1,33 @@
-// Exact 10 Categories with Word Pools
 const categoriesData = [
-  { id: "Animals", name: "Animals", count: 100, pairs: [{ civilian: "DOG", undercover: "WOLF" }, { civilian: "CAT", undercover: "LION" }, { civilian: "HORSE", undercover: "DONKEY" }, { civilian: "EAGLE", undercover: "HAWK" }] },
-  { id: "Entertainment", name: "Entertainment", count: 100, pairs: [{ civilian: "MOVIE", undercover: "SERIES" }, { civilian: "CONCERT", undercover: "FESTIVAL" }, { civilian: "ACTOR", undercover: "DIRECTOR" }] },
-  { id: "Everyday Life", name: "Everyday Life", count: 100, pairs: [{ civilian: "MORNING", undercover: "EVENING" }, { civilian: "SLEEP", undercover: "NAP" }, { civilian: "ALARM", undercover: "TIMER" }] },
-  { id: "Food & Drink", name: "Food & Drink", count: 100, pairs: [{ civilian: "COFFEE", undercover: "TEA" }, { civilian: "BURGER", undercover: "SANDWICH" }, { civilian: "PIZZA", undercover: "PASTA" }] },
-  { id: "Nature", name: "Nature", count: 100, pairs: [{ civilian: "RIVER", undercover: "STREAM" }, { civilian: "MOUNTAIN", undercover: "HILL" }, { civilian: "FOREST", undercover: "JUNGLE" }] },
-  { id: "Objects", name: "Objects", count: 100, pairs: [{ civilian: "CHAIR", undercover: "STOOL" }, { civilian: "PENCIL", undercover: "PEN" }, { civilian: "CLOCK", undercover: "WATCH" }] },
-  { id: "Places", name: "Places", count: 100, pairs: [{ civilian: "PARK", undercover: "GARDEN" }, { civilian: "HOTEL", undercover: "MOTEL" }, { civilian: "CASTLE", undercover: "PALACE" }] },
-  { id: "Professions", name: "Professions", count: 100, pairs: [{ civilian: "DOCTOR", undercover: "NURSE" }, { civilian: "PILOT", undercover: "CAPTAIN" }, { civilian: "CHEF", undercover: "COOK" }] },
-  { id: "Sports", name: "Sports", count: 100, pairs: [{ civilian: "FOOTBALL", undercover: "RUGBY" }, { civilian: "TENNIS", undercover: "BADMINTON" }, { civilian: "RUNNING", undercover: "JOGGING" }] },
-  { id: "Travel", name: "Travel", count: 100, pairs: [{ civilian: "PLANE", undercover: "HELICOPTER" }, { civilian: "PASSPORT", undercover: "VISA" }, { civilian: "SUITCASE", undercover: "BACKPACK" }] }
+  { id: "Animals", name: "Animals", count: 100, pairs: [{ civilian: "DOG", undercover: "WOLF" }, { civilian: "CAT", undercover: "LION" }] },
+  { id: "Entertainment", name: "Entertainment", count: 100, pairs: [{ civilian: "MOVIE", undercover: "SERIES" }] },
+  { id: "Everyday Life", name: "Everyday Life", count: 100, pairs: [{ civilian: "MORNING", undercover: "EVENING" }] },
+  { id: "Food & Drink", name: "Food & Drink", count: 100, pairs: [{ civilian: "COFFEE", undercover: "TEA" }] },
+  { id: "Nature", name: "Nature", count: 100, pairs: [{ civilian: "RIVER", undercover: "STREAM" }] },
+  { id: "Objects", name: "Objects", count: 100, pairs: [{ civilian: "CHAIR", undercover: "STOOL" }] },
+  { id: "Places", name: "Places", count: 100, pairs: [{ civilian: "PARK", undercover: "GARDEN" }] },
+  { id: "Professions", name: "Professions", count: 100, pairs: [{ civilian: "DOCTOR", undercover: "NURSE" }] },
+  { id: "Sports", name: "Sports", count: 100, pairs: [{ civilian: "FOOTBALL", undercover: "RUGBY" }] },
+  { id: "Travel", name: "Travel", count: 100, pairs: [{ civilian: "PLANE", undercover: "HELICOPTER" }] }
 ];
 
 let selectedCategories = new Set(categoriesData.map(c => c.id));
 let isAllSelected = true;
 
+// Default empty group structure for new games
 let currentTeam = {
-  name: "Team 5",
+  name: "",
   players: [
-    { name: "SN", color: "#22c55e" },
-    { name: "AS", color: "#38bdf8" },
-    { name: "LA", color: "#4ade80" },
-    { name: "AA", color: "#0284c7" },
-    { name: "ME", color: "#22d3ee" },
-    { name: "AB", color: "#f43f5e" }
+    { name: "Player 1", color: "#22c55e" },
+    { name: "Player 2", color: "#38bdf8" },
+    { name: "Player 3", color: "#4ade80" },
+    { name: "Player 4", color: "#0284c7" },
+    { name: "Player 5", color: "#f43f5e" }
   ]
 };
 
 let undercoverCount = 1;
 let mrWhiteCount = 1;
-
-let usedWordPairsHistory = new Set();
-let isAIModeEnabled = true;
 
 let currentWordPair = null;
 let gameCards = [];
@@ -48,8 +44,23 @@ function initApp() {
   updateSetupUI();
 }
 
+function startNewGameFromHome() {
+  document.getElementById('team-name-input').value = "";
+  currentTeam.name = "";
+  currentTeam.players = [
+    { name: "Player 1", color: "#22c55e" },
+    { name: "Player 2", color: "#38bdf8" },
+    { name: "Player 3", color: "#4ade80" },
+    { name: "Player 4", color: "#0284c7" },
+    { name: "Player 5", color: "#f43f5e" }
+  ];
+  renderSuspectsList();
+  updateSetupUI();
+  navigateTo('page-2');
+}
+
 function updateTeamName(val) {
-  currentTeam.name = val.trim() || "Team";
+  currentTeam.name = val.trim();
 }
 
 function renderSuspectsList() {
@@ -73,13 +84,11 @@ function renderSuspectsList() {
 
 function addPlayerToCurrentGroup() {
   if (currentTeam.players.length >= 20) return alert("Maximum 20 players.");
-  const name = prompt("Enter player initials/name:");
-  if (name && name.trim()) {
-    const colors = ['#22c55e', '#38bdf8', '#4ade80', '#0284c7', '#22d3ee', '#f43f5e'];
-    currentTeam.players.push({ name: name.trim().toUpperCase(), color: colors[Math.floor(Math.random() * colors.length)] });
-    renderSuspectsList();
-    updateSetupUI();
-  }
+  const nextNum = currentTeam.players.length + 1;
+  const colors = ['#22c55e', '#38bdf8', '#4ade80', '#0284c7', '#22d3ee', '#f43f5e'];
+  currentTeam.players.push({ name: `Player ${nextNum}`, color: colors[Math.floor(Math.random() * colors.length)] });
+  renderSuspectsList();
+  updateSetupUI();
 }
 
 function removePlayer(idx) {
@@ -89,7 +98,6 @@ function removePlayer(idx) {
   updateSetupUI();
 }
 
-// Categories handling
 function renderCategoriesGrid() {
   const grid = document.getElementById('categories-grid');
   grid.innerHTML = '';
@@ -156,11 +164,6 @@ function updateSetupUI() {
     `${currentTeam.players.length} players · ${undercoverCount} Spy · ${mrWhiteCount} Mr White`;
 }
 
-function toggleAIMode(enabled) {
-  isAIModeEnabled = enabled;
-}
-
-// Word Picker
 function getNextWordPair() {
   let activePool = categoriesData.filter(c => selectedCategories.has(c.id));
   if (activePool.length === 0) activePool = categoriesData;
@@ -170,21 +173,12 @@ function getNextWordPair() {
     c.pairs.forEach(p => allPairs.push(p));
   });
 
-  let availablePairs = allPairs.filter(p => !usedWordPairsHistory.has(`${p.civilian}-${p.undercover}`));
-  if (availablePairs.length === 0) {
-    usedWordPairsHistory.clear();
-    availablePairs = allPairs;
-  }
-
-  const selected = availablePairs[Math.floor(Math.random() * availablePairs.length)];
-  usedWordPairsHistory.add(`${selected.civilian}-${selected.undercover}`);
-  return selected;
+  return allPairs[Math.floor(Math.random() * allPairs.length)];
 }
 
-// Game Flow
 function startGame() {
   if (selectedCategories.size === 0) return alert("Please select at least one category.");
-  if (currentTeam.players.length < 3) return alert("Minimum 3 players required.");
+  if (currentTeam.players.length < 5) return alert("Minimum 5 players required.");
 
   let players = [...currentTeam.players].sort(() => Math.random() - 0.5);
   currentWordPair = getNextWordPair();
@@ -201,7 +195,7 @@ function startGame() {
     role: roles[idx],
     word: roles[idx] === 'CIVILIAN' ? currentWordPair.civilian : (roles[idx] === 'UNDERCOVER' ? currentWordPair.undercover : 'You are Mr. White!'),
     eliminated: false,
-    order: idx + 1
+    order: 0
   }));
 
   gameCards = activePlayers.map(p => ({ ...p, used: false }));
@@ -247,9 +241,20 @@ function closeCardModal() {
   }
 }
 
+// TURN ORDER RULE: Mr. White CANNOT be the first person to describe/start discussion
 function initDescriptionBoard() {
   isVotingMode = false;
-  let activeOnly = activePlayers.filter(p => !p.eliminated).sort(() => Math.random() - 0.5);
+  let activeOnly = activePlayers.filter(p => !p.eliminated);
+
+  // Shuffle active players until a non-Mr. White player is at index 0
+  let validOrder = false;
+  while (!validOrder) {
+    activeOnly.sort(() => Math.random() - 0.5);
+    if (activeOnly[0].role !== 'MR_WHITE') {
+      validOrder = true;
+    }
+  }
+
   activeOnly.forEach((p, idx) => p.order = idx + 1);
   renderBoardUI();
 }
@@ -268,7 +273,7 @@ function renderBoardUI() {
   const grid = document.getElementById('players-board-grid');
   grid.innerHTML = '';
 
-  activePlayers.filter(p => !p.eliminated).forEach(p => {
+  activePlayers.filter(p => !p.eliminated).sort((a,b) => a.order - b.order).forEach(p => {
     grid.innerHTML += `
       <div class="player-card-node">
         ${isVotingMode ? `<div class="badge-elim" onclick="openEliminateModal('${p.name}')">Eliminate</div>` : `<div class="badge-order">${p.order}</div>`}
@@ -350,12 +355,10 @@ function closeMrWhiteWrongModal() {
   checkWinConditions();
 }
 
-// Win Conditions
 function checkWinConditions() {
   const remaining = activePlayers.filter(p => !p.eliminated);
   const remainingInfiltrators = remaining.filter(p => p.role === 'MR_WHITE' || p.role === 'UNDERCOVER');
 
-  // FEATURE 2: Once all Mr White & Undercover are eliminated, Civilians win
   if (remainingInfiltrators.length === 0) {
     winningTeam = 'CIVILIANS';
     triggerGameOver("All Mr. Whites and Undercovers eliminated! Civilians win!");
@@ -431,7 +434,7 @@ function goBack() {
 function confirmQuitGame() {
   if (confirm("Are you sure you want to quit the current game?")) {
     pageHistory = [];
-    navigateTo('page-2');
+    navigateTo('page-1');
   }
 }
 
