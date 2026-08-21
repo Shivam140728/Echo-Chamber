@@ -52,29 +52,11 @@
         </div>
       </div>
 
-      <!-- CATEGORY SELECTION SECTION -->
-      <div class="category-section">
-        <div class="section-label">Choose Categories</div>
-        <div class="category-grid" id="category-grid">
-          <button class="category-chip active" id="cat-all" onclick="toggleCategory('All')">✨ All Categories</button>
-          <button class="category-chip" onclick="toggleCategory('Animals')">Animals</button>
-          <button class="category-chip" onclick="toggleCategory('Entertainment')">Entertainment</button>
-          <button class="category-chip" onclick="toggleCategory('Everyday Life')">Everyday Life</button>
-          <button class="category-chip" onclick="toggleCategory('Food & Drink')">Food & Drink</button>
-          <button class="category-chip" onclick="toggleCategory('Nature')">Nature</button>
-          <button class="category-chip" onclick="toggleCategory('Objects')">Objects</button>
-          <button class="category-chip" onclick="toggleCategory('Places')">Places</button>
-          <button class="category-chip" onclick="toggleCategory('Professions')">Professions</button>
-          <button class="category-chip" onclick="toggleCategory('Sports')">Sports</button>
-          <button class="category-chip" onclick="toggleCategory('Travel')">Travel</button>
-        </div>
-      </div>
-
       <!-- AI WORD GENERATION TOGGLE -->
       <div class="ai-toggle-box">
         <div class="ai-toggle-info">
           <span class="ai-toggle-title">🤖 AI Word Generator</span>
-          <span class="ai-toggle-desc">Dynamic non-repeating words</span>
+          <span class="ai-toggle-desc">Infinite words across all categories</span>
         </div>
         <label class="switch">
           <input type="checkbox" id="ai-mode-switch" checked onchange="toggleAIMode(this.checked)">
@@ -82,7 +64,7 @@
         </label>
       </div>
 
-      <button class="primary-btn" onclick="startGame()">Start Game</button>
+      <button class="primary-btn" onclick="startGame()">Start</button>
     </div>
 
     <!-- PAGE 3: GROUPS PAGE -->
@@ -92,12 +74,7 @@
         <h2 class="section-title">Groups</h2>
         <button class="icon-btn add-btn" onclick="openCreateGroup()">＋</button>
       </div>
-      
-      <div class="section-header-box">
-        <span class="crews-label">YOUR CREWS</span>
-        <h3 class="crews-title">Ready teams</h3>
-      </div>
-
+      <p class="subtitle">Select or edit player groups for your game.</p>
       <div id="groups-container"></div>
       <button class="icon-btn close-floating-btn" onclick="navigateTo('page-2')">✕</button>
     </div>
@@ -175,7 +152,7 @@
       </div>
 
       <div class="summary-header">
-        <h2 id="summary-title" class="summary-title">The Civilians win! 🎉</h2>
+        <h2 id="summary-title" class="summary-title">The Infiltrators win!</h2>
         <div class="summary-words-box">
           <p>👤 Civilian Word: <b id="sum-civilian-word">ESCALATOR</b></p>
           <p>🕵️ Undercover Word: <b id="sum-undercover-word">ELEVATOR</b></p>
@@ -204,7 +181,9 @@
         <h3 id="elim-player-title" class="modal-player-title">Eliminate Player?</h3>
         <p class="modal-subtitle">Select infiltrator role for elimination:</p>
         
-        <div class="modal-actions-row flex-column" id="elimination-options-container"></div>
+        <div class="modal-actions-row flex-column" id="elimination-options-container">
+          <!-- Dynamic Role Buttons (Mr White / Undercover Only) generated via JS -->
+        </div>
       </div>
     </div>
 
@@ -245,7 +224,7 @@
           <span class="spy-icon-large">🕵️</span>
           <span class="spy-icon-large">🕵️‍♂️</span>
         </div>
-        <div class="win-ribbon" id="game-over-title">The Civilians win!</div>
+        <div class="win-ribbon" id="game-over-title">The Infiltrators win!</div>
         <p id="game-over-msg" class="modal-subtitle" style="margin-top: 10px; color: white;"></p>
         <button class="primary-btn" onclick="goToSummaryPage()" style="margin-top: 15px; background: white; color: #ef4444;">View Game Results</button>
       </div>
