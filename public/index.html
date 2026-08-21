@@ -10,163 +10,115 @@
 
   <div class="app-container">
 
-    <!-- PAGE 1: HOME PAGE -->
+    <!-- PAGE 1: FRONT PAGE -->
     <div id="page-1" class="page active">
-      <div class="top-brand-bar">
-        <div class="brand-logo"><span>W</span> MR. WHITE</div>
-        <div class="fresh-pill" id="home-fresh-badge">1,000 FRESH</div>
+      <div class="logo-container">
+        <div class="logo-title">UNDER<br>COVER</div>
       </div>
-
-      <div class="hero-banner-card">
-        <span class="hero-tag">PASS THE PHONE · TRUST NO ONE</span>
-        <h1 class="hero-title">Same room.<br><span class="highlight-orange">Different truths.</span></h1>
-        <p class="hero-desc">Find the Spy. Expose Mr White. Try not to look suspicious.</p>
-        
-        <button class="hero-start-btn" onclick="createNewGame()">
-          Start a new game ➔
-        </button>
-
-        <div class="hero-stats-row">
-          <div class="stat-item">
-            <span class="stat-val">3–20</span>
-            <span class="stat-lbl">PLAYERS</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-val" id="stat-total-words">1,000</span>
-            <span class="stat-lbl">WORD PAIRS</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-val">10</span>
-            <span class="stat-lbl">CATEGORIES</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- READY TEAMS / YOUR CREWS -->
-      <div class="crews-section">
-        <span class="section-tag font-serif">YOUR CREWS</span>
-        <h2 class="section-title">Ready teams</h2>
-        
-        <div class="crews-horizontal-scroll" id="ready-teams-container">
-          <!-- Dynamic Team Cards inserted here -->
-        </div>
+      <div class="play-card-btn" onclick="navigateTo('page-2')">
+        <div class="play-icon"></div>
       </div>
     </div>
 
     <!-- PAGE 2: GAME SETUP PAGE -->
     <div id="page-2" class="page">
       <div class="header-bar">
-        <button class="icon-btn" onclick="navigateTo('page-1')">←</button>
-        <span class="setup-section-tag">NEW GAME</span>
+        <button class="icon-btn" onclick="goBack()">←</button>
+        <div class="groups-badge" onclick="navigateTo('page-3')">
+          <div class="groups-icon">👥</div>
+          <span class="groups-label">Groups</span>
+        </div>
+      </div>
+
+      <div class="player-count-title" id="setup-player-count">Players: 5</div>
+
+      <div class="role-card-box">
+        <div class="counter-row">
+          <div></div>
+          <div class="pill-btn pill-civilians" id="label-civilians">👤 3 Civilians</div>
+          <div></div>
+        </div>
+
+        <div class="counter-row">
+          <button class="counter-btn" onclick="adjustRole('undercover', -1)">-</button>
+          <div class="pill-btn pill-undercover" id="label-undercover">🕵️ 1 Undercover</div>
+          <button class="counter-btn" onclick="adjustRole('undercover', 1)">+</button>
+        </div>
+
+        <div class="counter-row">
+          <button class="counter-btn" onclick="adjustRole('mrWhite', -1)">-</button>
+          <div class="pill-btn pill-mrwhite" id="label-mrwhite">🕵️‍♂️ 1 Mr. White</div>
+          <button class="counter-btn" onclick="adjustRole('mrWhite', 1)">+</button>
+        </div>
+      </div>
+
+      <!-- CATEGORY SELECTION SECTION -->
+      <div class="category-section">
+        <div class="section-label">Choose Categories</div>
+        <div class="category-grid" id="category-grid">
+          <button class="category-chip active" id="cat-all" onclick="toggleCategory('All')">✨ All Categories</button>
+          <button class="category-chip" onclick="toggleCategory('Animals')">Animals</button>
+          <button class="category-chip" onclick="toggleCategory('Entertainment')">Entertainment</button>
+          <button class="category-chip" onclick="toggleCategory('Everyday Life')">Everyday Life</button>
+          <button class="category-chip" onclick="toggleCategory('Food & Drink')">Food & Drink</button>
+          <button class="category-chip" onclick="toggleCategory('Nature')">Nature</button>
+          <button class="category-chip" onclick="toggleCategory('Objects')">Objects</button>
+          <button class="category-chip" onclick="toggleCategory('Places')">Places</button>
+          <button class="category-chip" onclick="toggleCategory('Professions')">Professions</button>
+          <button class="category-chip" onclick="toggleCategory('Sports')">Sports</button>
+          <button class="category-chip" onclick="toggleCategory('Travel')">Travel</button>
+        </div>
+      </div>
+
+      <!-- AI WORD GENERATION TOGGLE -->
+      <div class="ai-toggle-box">
+        <div class="ai-toggle-info">
+          <span class="ai-toggle-title">🤖 AI Word Generator</span>
+          <span class="ai-toggle-desc">Dynamic non-repeating words</span>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="ai-mode-switch" checked onchange="toggleAIMode(this.checked)">
+          <span class="slider round"></span>
+        </label>
+      </div>
+
+      <button class="primary-btn" onclick="startGame()">Start Game</button>
+    </div>
+
+    <!-- PAGE 3: GROUPS PAGE -->
+    <div id="page-3" class="page">
+      <div class="header-bar">
+        <button class="icon-btn" onclick="goBack()">←</button>
+        <h2 class="section-title">Groups</h2>
+        <button class="icon-btn add-btn" onclick="openCreateGroup()">＋</button>
+      </div>
+      <p class="subtitle">Select or edit player groups for your game.</p>
+      <div id="groups-container"></div>
+      <button class="icon-btn close-floating-btn" onclick="navigateTo('page-2')">✕</button>
+    </div>
+
+    <!-- PAGE 4: EDIT GROUP PAGE -->
+    <div id="page-4" class="page">
+      <div class="header-bar">
+        <button class="icon-btn" onclick="goBack()">←</button>
+        <input type="text" id="edit-group-name" value="New Group" class="group-name-input">
         <div></div>
       </div>
 
-      <h1 class="main-setup-title">Set the scene</h1>
+      <div class="edit-card-box">
+        <h4 class="edit-subtitle">Add, remove or reorder players (3 - 20)</h4>
+        <div id="edit-players-list" class="player-list-edit"></div>
 
-      <!-- STEP 1: TEAM NAME -->
-      <div class="setup-step">
-        <div class="step-header">
-          <span class="step-num">01</span>
-          <div>
-            <h3 class="step-title">Name your team</h3>
-            <p class="step-desc">Saved for future rematches and scores.</p>
-          </div>
+        <div class="add-player-row" onclick="addPlayerToGroup()">
+          <div class="counter-btn add-icon-bg">+</div>
+          <span style="font-weight: 700;">Add new player</span>
         </div>
-        <input type="text" id="team-name-input" class="stylish-input" placeholder="Friday Night Suspects" oninput="updateTeamName(this.value)">
+
+        <button class="primary-btn save-btn" onclick="saveGroupChanges()">Save changes</button>
       </div>
-
-      <!-- STEP 2: SUSPECTS -->
-      <div class="setup-step">
-        <div class="step-header">
-          <span class="step-num">02</span>
-          <div>
-            <h3 class="step-title">Add the suspects</h3>
-            <p class="step-desc">3 minimum · 20 maximum</p>
-          </div>
-          <span class="badge-count" id="badge-player-count">0</span>
-        </div>
-
-        <div id="suspects-list-container" class="suspects-list"></div>
-
-        <button class="add-player-btn" onclick="addPlayerToCurrentGroup()">
-          <span>+</span> Add another player
-        </button>
-      </div>
-
-      <!-- STEP 3: CATEGORIES -->
-      <div class="setup-step">
-        <div class="step-header">
-          <span class="step-num">03</span>
-          <div>
-            <h3 class="step-title">Choose categories</h3>
-            <p class="step-desc">Pick one, a few, or mix them all.</p>
-          </div>
-        </div>
-
-        <div class="all-categories-btn selected" id="cat-btn-all" onclick="toggleAllCategories()">
-          <span class="sparkle-icon">✦</span>
-          <span class="cat-label">All categories</span>
-          <span class="check-icon">✓</span>
-        </div>
-
-        <div class="categories-grid" id="categories-grid"></div>
-      </div>
-
-      <!-- STEP 4: HIDDEN ROLES -->
-      <div class="setup-step">
-        <div class="step-header">
-          <span class="step-num">04</span>
-          <div>
-            <h3 class="step-title">Set hidden roles</h3>
-            <p class="step-desc">At least two Civilians will remain.</p>
-          </div>
-        </div>
-
-        <div class="role-row">
-          <div class="role-badge badge-spy">S</div>
-          <div class="role-info">
-            <span class="role-name">Spies</span>
-            <span class="role-sub">See a similar word</span>
-          </div>
-          <div class="counter-control">
-            <button class="cnt-btn" onclick="adjustRole('undercover', -1)">-</button>
-            <span class="cnt-val" id="cnt-undercover">1</span>
-            <button class="cnt-btn" onclick="adjustRole('undercover', 1)">+</button>
-          </div>
-        </div>
-
-        <div class="role-row">
-          <div class="role-badge badge-white">W</div>
-          <div class="role-info">
-            <span class="role-name">Mr Whites</span>
-            <span class="role-sub">Receive no word</span>
-          </div>
-          <div class="counter-control">
-            <button class="cnt-btn" onclick="adjustRole('mrWhite', -1)">-</button>
-            <span class="cnt-val" id="cnt-mrwhite">1</span>
-            <button class="cnt-btn" onclick="adjustRole('mrWhite', 1)">+</button>
-          </div>
-        </div>
-
-        <div class="fresh-toggle-row">
-          <div class="fresh-info">
-            <span class="fresh-title">🔄 Keep words fresh</span>
-            <span class="fresh-sub">Never repeat a previously used word</span>
-          </div>
-          <label class="switch">
-            <input type="checkbox" id="ai-mode-switch" checked onchange="toggleAIMode(this.checked)">
-            <span class="slider round"></span>
-          </label>
-        </div>
-      </div>
-
-      <button class="primary-btn black-btn" onclick="startGame()">
-        Deal the secret roles ➔
-      </button>
-      <p class="game-footer-summary" id="footer-summary-text">0 players · 1 Spy · 1 Mr White</p>
     </div>
 
-    <!-- PAGE 5: CARD SELECTION -->
+    <!-- PAGE 5: CARD SELECTION PAGE -->
     <div id="page-5" class="page">
       <div class="header-bar picker-header">
         <div class="picker-top-bar">
@@ -179,7 +131,7 @@
       <div class="cards-grid" id="cards-grid"></div>
     </div>
 
-    <!-- PAGE 6: GAMEPLAY BOARD -->
+    <!-- PAGE 6: DESCRIPTION & VOTING BOARD -->
     <div id="page-6" class="page">
       <div class="header-bar" style="margin-bottom:8px;">
         <button class="icon-btn" onclick="confirmQuitGame()">←</button>
@@ -196,8 +148,8 @@
         <div class="status-box">
           <span class="status-label">Remaining Infiltrators</span>
           <div class="status-counts">
-            <span>🕵️‍♂️ <b id="board-count-mrwhite">1</b></span>
-            <span>🕵️ <b id="board-count-undercover">1</b></span>
+            <span>🕵️‍♂️ <b id="count-mrwhite">1</b></span>
+            <span>🕵️ <b id="count-undercover">1</b></span>
           </div>
         </div>
       </div>
@@ -209,16 +161,16 @@
       </div>
     </div>
 
-    <!-- PAGE 7: SUMMARY PAGE -->
+    <!-- PAGE 7: FINAL SUMMARY PAGE -->
     <div id="page-7" class="page">
       <div class="header-bar" style="margin-bottom:8px;">
-        <button class="icon-btn" onclick="navigateTo('page-1')">←</button>
+        <button class="icon-btn" onclick="navigateTo('page-2')">←</button>
         <div></div>
         <div></div>
       </div>
 
       <div class="summary-header">
-        <h2 id="summary-title" class="summary-title">The Civilians win!</h2>
+        <h2 id="summary-title" class="summary-title">The Civilians win! 🎉</h2>
         <div class="summary-words-box">
           <p>👤 Civilian Word: <b id="sum-civilian-word">ESCALATOR</b></p>
           <p>🕵️ Undercover Word: <b id="sum-undercover-word">ELEVATOR</b></p>
@@ -227,7 +179,7 @@
 
       <div id="summary-players-list" class="summary-players-list"></div>
 
-      <button class="primary-btn summary-btn" onclick="navigateTo('page-1')">Back to Home</button>
+      <button class="primary-btn summary-btn" onclick="navigateTo('page-2')">Play Again</button>
     </div>
 
     <!-- SECRET WORD REVEAL MODAL -->
@@ -246,7 +198,10 @@
       <div class="modal-card">
         <h3 id="elim-player-title" class="modal-player-title">Eliminate Player?</h3>
         <p class="modal-subtitle">Select infiltrator role for elimination:</p>
-        <div class="modal-actions-row flex-column" id="elimination-options-container"></div>
+        
+        <div class="modal-actions-row flex-column" id="elimination-options-container">
+          <!-- Dynamic Role Buttons (Mr White / Undercover Only) generated via JS -->
+        </div>
       </div>
     </div>
 
@@ -265,7 +220,7 @@
       <div class="modal-card">
         <h3>Mr. White's Guess</h3>
         <p class="modal-subtitle">Guess the Civilian secret word to win!</p>
-        <input type="text" id="mrwhite-word-input" class="stylish-input" placeholder="Enter word...">
+        <input type="text" id="mrwhite-word-input" class="group-name-input input-bordered" placeholder="Enter word...">
         <button class="primary-btn" onclick="submitMrWhiteGuess()">Submit Guess</button>
       </div>
     </div>
@@ -279,12 +234,13 @@
       </div>
     </div>
 
-    <!-- GAME OVER MODAL -->
+    <!-- GAME OVER / WINNING BANNER MODAL -->
     <div class="modal-overlay" id="game-over-modal">
       <div class="modal-card banner-card">
         <div class="trophy-badge">🏆</div>
         <div class="spy-illustration">
-          <span class="spy-icon-large">🎉</span>
+          <span class="spy-icon-large">🕵️</span>
+          <span class="spy-icon-large">🕵️‍♂️</span>
         </div>
         <div class="win-ribbon" id="game-over-title">The Civilians win!</div>
         <p id="game-over-msg" class="modal-subtitle" style="margin-top: 10px; color: white;"></p>

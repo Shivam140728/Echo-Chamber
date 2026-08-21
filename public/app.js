@@ -1,266 +1,398 @@
-// Categories Data
-const categoriesData = [
-  { id: "Animals", name: "Animals", count: 100, pairs: [{ civilian: "DOG", undercover: "WOLF" }, { civilian: "CAT", undercover: "LION" }, { civilian: "HORSE", undercover: "DONKEY" }] },
-  { id: "Entertainment", name: "Entertainment", count: 100, pairs: [{ civilian: "MOVIE", undercover: "SERIES" }, { civilian: "CONCERT", undercover: "FESTIVAL" }] },
-  { id: "Everyday Life", name: "Everyday Life", count: 100, pairs: [{ civilian: "MORNING", undercover: "EVENING" }, { civilian: "SLEEP", undercover: "NAP" }] },
-  { id: "Food & Drink", name: "Food & Drink", count: 100, pairs: [{ civilian: "COFFEE", undercover: "TEA" }, { civilian: "BURGER", undercover: "SANDWICH" }] },
-  { id: "Nature", name: "Nature", count: 100, pairs: [{ civilian: "RIVER", undercover: "STREAM" }, { civilian: "FOREST", undercover: "JUNGLE" }] },
-  { id: "Objects", name: "Objects", count: 100, pairs: [{ civilian: "CHAIR", undercover: "STOOL" }, { civilian: "CLOCK", undercover: "WATCH" }] },
-  { id: "Places", name: "Places", count: 100, pairs: [{ civilian: "PARK", undercover: "GARDEN" }, { civilian: "CASTLE", undercover: "PALACE" }] },
-  { id: "Professions", name: "Professions", count: 100, pairs: [{ civilian: "DOCTOR", undercover: "NURSE" }, { civilian: "CHEF", undercover: "COOK" }] },
-  { id: "Sports", name: "Sports", count: 100, pairs: [{ civilian: "FOOTBALL", undercover: "RUGBY" }, { civilian: "TENNIS", undercover: "BADMINTON" }] },
-  { id: "Travel", name: "Travel", count: 100, pairs: [{ civilian: "PLANE", undercover: "HELICOPTER" }, { civilian: "SUITCASE", undercover: "BACKPACK" }] }
+// Exact Categories from Image with 100 Major Word Pairs
+const staticCategoriesPool = [
+  {
+    category: "Animals",
+    pairs: [
+      { civilian: "LION", undercover: "TIGER" }, { civilian: "LEOPARD", undercover: "CHEETAH" }, { civilian: "DOLPHIN", undercover: "WHALE" },
+      { civilian: "EAGLE", undercover: "HAWK" }, { civilian: "DOG", undercover: "WOLF" }, { civilian: "CAT", undercover: "PANTHER" },
+      { civilian: "HORSE", undercover: "DONKEY" }, { civilian: "FROG", undercover: "TOAD" }, { civilian: "ALLIGATOR", undercover: "CROCODILE" },
+      { civilian: "RABBIT", undercover: "HARE" }
+    ]
+  },
+  {
+    category: "Entertainment",
+    pairs: [
+      { civilian: "MOVIE", undercover: "SERIES" }, { civilian: "CONCERT", undercover: "FESTIVAL" }, { civilian: "THEATER", undercover: "CINEMA" },
+      { civilian: "MAGICIAN", undercover: "ILLUSIONIST" }, { civilian: "CIRCUS", undercover: "CARNIVAL" }, { civilian: "ACTOR", undercover: "DIRECTOR" },
+      { civilian: "DRAMA", undercover: "COMEDY" }, { civilian: "CARTOON", undercover: "ANIME" }, { civilian: "MUSICAL", undercover: "OPERA" },
+      { civilian: "TICKET", undercover: "PASS" }
+    ]
+  },
+  {
+    category: "Everyday Life",
+    pairs: [
+      { civilian: "ALARM", undercover: "TIMER" }, { civilian: "MIRROR", undercover: "WINDOW" }, { civilian: "SOAP", undercover: "SHAMPOO" },
+      { civilian: "BED", undercover: "SOFA" }, { civilian: "WALLET", undercover: "PURSE" }, { civilian: "SHOWER", undercover: "BATH" },
+      { civilian: "UMBRELLA", undercover: "RAINCOAT" }, { civilian: "KEY", undercover: "LOCK" }, { civilian: "CLOCK", undercover: "WATCH" },
+      { civilian: "BLANKET", undercover: "QUILT" }
+    ]
+  },
+  {
+    category: "Food & Drink",
+    pairs: [
+      { civilian: "COFFEE", undercover: "TEA" }, { civilian: "APPLE", undercover: "PEAR" }, { civilian: "BURGER", undercover: "SANDWICH" },
+      { civilian: "ICE CREAM", undercover: "FROZEN YOGURT" }, { civilian: "PIZZA", undercover: "PASTA" }, { civilian: "JUICE", undercover: "SMOOTHIE" },
+      { civilian: "CHOCOLATE", undercover: "CANDY" }, { civilian: "CAKE", undercover: "PASTRY" }, { civilian: "RICE", undercover: "NOODLES" },
+      { civilian: "BUTTER", undercover: "CHEESE" }
+    ]
+  },
+  {
+    category: "Nature",
+    pairs: [
+      { civilian: "RIVER", undercover: "STREAM" }, { civilian: "OCEAN", undercover: "SEA" }, { civilian: "MOUNTAIN", undercover: "HILL" },
+      { civilian: "FOREST", undercover: "JUNGLE" }, { civilian: "DESERT", undercover: "SAVANNA" }, { civilian: "VOLCANO", undercover: "CANYON" },
+      { civilian: "ISLAND", undercover: "PENINSULA" }, { civilian: "RAIN", undercover: "SNOW" }, { civilian: "WIND", undercover: "STORM" },
+      { civilian: "SUNFLOWER", undercover: "ROSE" }
+    ]
+  },
+  {
+    category: "Objects",
+    pairs: [
+      { civilian: "PENCIL", undercover: "PEN" }, { civilian: "CHAIR", undercover: "STOOL" }, { civilian: "TABLE", undercover: "DESK" },
+      { civilian: "SCISSORS", undercover: "KNIFE" }, { civilian: "BOTTLE", undercover: "GLASS" }, { civilian: "BAG", undercover: "BACKPACK" },
+      { civilian: "LAMP", undercover: "FLASHLIGHT" }, { civilian: "BOOK", undercover: "MAGAZINE" }, { civilian: "PHONE", undercover: "TABLET" },
+      { civilian: "CAMERA", undercover: "TELESCOPE" }
+    ]
+  },
+  {
+    category: "Places",
+    pairs: [
+      { civilian: "CASTLE", undercover: "PALACE" }, { civilian: "HOTEL", undercover: "MOTEL" }, { civilian: "PARK", undercover: "GARDEN" },
+      { civilian: "SCHOOL", undercover: "COLLEGE" }, { civilian: "LIBRARY", undercover: "MUSEUM" }, { civilian: "HOSPITAL", undercover: "CLINIC" },
+      { civilian: "AIRPORT", undercover: "STATION" }, { civilian: "MALL", undercover: "MARKET" }, { civilian: "BEACH", undercover: "COAST" },
+      { civilian: "CITY", undercover: "VILLAGE" }
+    ]
+  },
+  {
+    category: "Professions",
+    pairs: [
+      { civilian: "DOCTOR", undercover: "NURSE" }, { civilian: "PILOT", undercover: "CAPTAIN" }, { civilian: "CHEF", undercover: "BAKER" },
+      { civilian: "POLICE", undercover: "GUARD" }, { civilian: "TEACHER", undercover: "PROFESSOR" }, { civilian: "FIREFIGHER", undercover: "RESCUER" },
+      { civilian: "LAWYER", undercover: "JUDGE" }, { civilian: "ENGINEER", undercover: "ARCHITECT" }, { civilian: "SINGER", undercover: "MUSICIAN" },
+      { civilian: "FARMER", undercover: "GARDENER" }
+    ]
+  },
+  {
+    category: "Sports",
+    pairs: [
+      { civilian: "FOOTBALL", undercover: "RUGBY" }, { civilian: "TENNIS", undercover: "BADMINTON" }, { civilian: "BASEBALL", undercover: "CRICKET" },
+      { civilian: "SWIMMING", undercover: "DIVING" }, { civilian: "SKATING", undercover: "SKIING" }, { civilian: "BOXING", undercover: "WRESTLING" },
+      { civilian: "BASKETBALL", undercover: "VOLLEYBALL" }, { civilian: "GOLF", undercover: "BOWLING" }, { civilian: "RUNNING", undercover: "JOGGING" },
+      { civilian: "SURFING", undercover: "SAILING" }
+    ]
+  },
+  {
+    category: "Travel",
+    pairs: [
+      { civilian: "PASSPORT", undercover: "VISA" }, { civilian: "SUITCASE", undercover: "DUFFEL" }, { civilian: "FLIGHT", undercover: "CRUISE" },
+      { civilian: "MAP", undercover: "COMPASS" }, { civilian: "GUIDE", undercover: "TRANSLATOR" }, { civilian: "TAXI", undercover: "BUS" },
+      { civilian: "TENT", undercover: "CABIN" }, { civilian: "SOUVENIR", undercover: "GIFT" }, { civilian: "RESORT", undercover: "CAMP" },
+      { civilian: "TICKET", undercover: "BOARDING PASS" }
+    ]
+  }
 ];
 
-const TOTAL_WORD_PAIRS = 1000;
+let selectedCategories = ["All"];
+let usedWordPairsHistory = new Set();
+let isAIModeEnabled = true;
 
-// Ready Teams State (Stored locally)
-let readyTeams = JSON.parse(localStorage.getItem('undercover_ready_teams')) || [
-  { id: 't1', name: 'Office', badge: 'O', color: '#f97316', players: ["ALEX", "SAM", "JORDAN", "TAYLOR", "CHRIS", "PAT", "MORGAN", "CASEY", "RILEY"] },
-  { id: 't2', name: 'Team 5', badge: 'T5', color: '#6366f1', players: ["SN", "AS", "LA", "AA", "ME", "AB"] },
-  { id: 't3', name: 'Bangalore Friends', badge: 'BF', color: '#10b981', players: ["KIRAN", "RAHUL", "PRIYA", "ANISH", "DEEPA"] }
+let unusedPairsDeck = [];
+let winningTeam = ""; 
+let pageHistory = [];
+
+let groups = [
+  {
+    id: 'g1',
+    name: 'Team 5',
+    color: '#f43f5e',
+    players: [
+      { name: 'Shivam', color: '#22c55e' },
+      { name: 'Sneha', color: '#38bdf8' },
+      { name: 'Mahima', color: '#4ade80' },
+      { name: 'Dhanush', color: '#0284c7' },
+      { name: 'Anand', color: '#22d3ee' }
+    ]
+  }
 ];
 
-let activeTeam = {
-  id: null,
-  name: "Friday Night Suspects",
-  players: ["PLAYER 1", "PLAYER 2", "PLAYER 3", "PLAYER 4", "PLAYER 5"]
-};
-
-let selectedCategories = new Set(categoriesData.map(c => c.id));
-let isAllSelected = true;
+let selectedGroupId = 'g1';
+let editingGroup = null;
 
 let undercoverCount = 1;
 let mrWhiteCount = 1;
 
-let usedWordPairsHistory = new Set();
-let isAIModeEnabled = true;
-
 let currentWordPair = null;
 let gameCards = [];
 let currentPickerIndex = 0;
+
 let activePlayers = [];
 let isVotingMode = false;
 let playerToEliminate = null;
-let winningTeam = "";
-let pageHistory = [];
 
-function initApp() {
-  renderReadyTeams();
-  updateFreshCardBadge();
-  renderSuspectsList();
-  renderCategoriesGrid();
-  updateSetupUI();
+function saveGroupsToStorage() {
+  localStorage.setItem('undercover_groups', JSON.stringify(groups));
+  localStorage.setItem('undercover_ai_mode', JSON.stringify(isAIModeEnabled));
 }
 
-function updateFreshCardBadge() {
-  const remainingCount = TOTAL_WORD_PAIRS - usedWordPairsHistory.size;
-  document.getElementById('home-fresh-badge').innerText = `${remainingCount.toLocaleString()} FRESH`;
+function loadGroupsFromStorage() {
+  const storedGroups = localStorage.getItem('undercover_groups');
+  if (storedGroups) {
+    try { groups = JSON.parse(storedGroups); } catch (e) { console.error(e); }
+  }
+
+  const storedAIMode = localStorage.getItem('undercover_ai_mode');
+  if (storedAIMode !== null) {
+    isAIModeEnabled = JSON.parse(storedAIMode);
+    document.getElementById('ai-mode-switch').checked = isAIModeEnabled;
+  }
 }
 
-function renderReadyTeams() {
-  const container = document.getElementById('ready-teams-container');
-  container.innerHTML = '';
+function toggleAIMode(enabled) {
+  isAIModeEnabled = enabled;
+  saveGroupsToStorage();
+}
 
-  readyTeams.forEach(t => {
-    container.innerHTML += `
-      <div class="team-card" onclick="selectReadyTeam('${t.id}')">
-        <div class="team-card-badge" style="background:${t.color}">${t.badge}</div>
-        <div class="team-card-title">${t.name}</div>
-        <div class="team-card-sub">${t.players.length} players</div>
-      </div>
-    `;
+// Category Selection Logic
+function toggleCategory(catName) {
+  if (catName === 'All') {
+    selectedCategories = ['All'];
+  } else {
+    selectedCategories = selectedCategories.filter(c => c !== 'All');
+    if (selectedCategories.includes(catName)) {
+      selectedCategories = selectedCategories.filter(c => c !== catName);
+    } else {
+      selectedCategories.push(catName);
+    }
+
+    if (selectedCategories.length === 0) {
+      selectedCategories = ['All'];
+    }
+  }
+
+  renderCategoriesUI();
+}
+
+function renderCategoriesUI() {
+  const chips = document.querySelectorAll('.category-chip');
+  chips.forEach(chip => {
+    const text = chip.innerText.replace('✨ ', '');
+    if (selectedCategories.includes('All') && text.includes('All')) {
+      chip.classList.add('active');
+    } else if (!selectedCategories.includes('All') && selectedCategories.includes(text)) {
+      chip.classList.add('active');
+    } else {
+      chip.classList.remove('active');
+    }
   });
 }
 
-function createNewGame() {
-  activeTeam = {
-    id: null,
-    name: "Friday Night Suspects",
-    players: ["PLAYER 1", "PLAYER 2", "PLAYER 3", "PLAYER 4", "PLAYER 5"]
-  };
-  document.getElementById('team-name-input').value = activeTeam.name;
-  renderSuspectsList();
-  updateSetupUI();
-  navigateTo('page-2');
+// AI / Word Pair Engine
+async function getNextWordPair() {
+  if (isAIModeEnabled) {
+    try {
+      const availableCategories = selectedCategories.includes('All') 
+        ? ["Animals", "Entertainment", "Everyday Life", "Food & Drink", "Nature", "Objects", "Places", "Professions", "Sports", "Travel"]
+        : selectedCategories;
+
+      const randomCat = availableCategories[Math.floor(Math.random() * availableCategories.length)];
+      
+      const response = await fetch(`https://api.datamuse.com/words?ml=${encodeURIComponent(randomCat)}&max=10`);
+      const data = await response.json();
+      
+      if (data && data.length >= 2) {
+        const word1 = data[0].word.toUpperCase();
+        const word2 = data[1].word.toUpperCase();
+        const pairKey = `${word1}-${word2}`;
+
+        if (!usedWordPairsHistory.has(pairKey)) {
+          usedWordPairsHistory.add(pairKey);
+          return { civilian: word1, undercover: word2, category: randomCat };
+        }
+      }
+    } catch (err) {
+      console.warn("AI Generation fallback to local non-repeating deck:", err);
+    }
+  }
+
+  // Local Deck Fallback Mode
+  if (unusedPairsDeck.length === 0) {
+    staticCategoriesPool.forEach(cat => {
+      if (selectedCategories.includes('All') || selectedCategories.includes(cat.category)) {
+        cat.pairs.forEach(pair => {
+          const pairKey = `${pair.civilian}-${pair.undercover}`;
+          if (!usedWordPairsHistory.has(pairKey)) {
+            unusedPairsDeck.push({ ...pair, category: cat.category });
+          }
+        });
+      }
+    });
+
+    if (unusedPairsDeck.length === 0) {
+      usedWordPairsHistory.clear();
+      return getNextWordPair();
+    }
+
+    unusedPairsDeck.sort(() => Math.random() - 0.5);
+  }
+
+  const selected = unusedPairsDeck.pop();
+  usedWordPairsHistory.add(`${selected.civilian}-${selected.undercover}`);
+  return selected;
 }
 
-function selectReadyTeam(teamId) {
-  const selected = readyTeams.find(t => t.id === teamId);
-  if (selected) {
-    activeTeam = JSON.parse(JSON.stringify(selected));
-    document.getElementById('team-name-input').value = activeTeam.name;
-    renderSuspectsList();
-    updateSetupUI();
+function initApp() {
+  loadGroupsFromStorage();
+  updateSetupUI();
+  renderCategoriesUI();
+}
+
+function navigateTo(pageId, isBack = false) {
+  const currentActive = document.querySelector('.page.active');
+  if (currentActive && !isBack) {
+    pageHistory.push(currentActive.id);
+  }
+
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(pageId).classList.add('active');
+
+  if (pageId === 'page-2') updateSetupUI();
+  if (pageId === 'page-3') renderGroupsList();
+}
+
+function goBack() {
+  if (pageHistory.length > 0) {
+    const previousPage = pageHistory.pop();
+    navigateTo(previousPage, true);
+  } else {
+    navigateTo('page-1', true);
+  }
+}
+
+function confirmQuitGame() {
+  if (confirm("Are you sure you want to quit the current game?")) {
+    pageHistory = [];
     navigateTo('page-2');
   }
 }
 
-function updateTeamName(val) {
-  activeTeam.name = val.trim() || "Team";
-  saveActiveTeamState();
-}
-
-function renderSuspectsList() {
-  const container = document.getElementById('suspects-list-container');
-  container.innerHTML = '';
-
-  activeTeam.players.forEach((pName, idx) => {
-    container.innerHTML += `
-      <div class="suspect-item">
-        <div class="suspect-left">
-          <span class="suspect-num">0${idx + 1}</span>
-          <input type="text" class="suspect-edit-input" value="${pName}" onchange="editPlayerName(${idx}, this.value)">
-        </div>
-        <button class="remove-btn" onclick="removePlayer(${idx})">✕</button>
-      </div>
-    `;
-  });
-
-  document.getElementById('badge-player-count').innerText = activeTeam.players.length;
-}
-
-function editPlayerName(index, newName) {
-  if (newName.trim()) {
-    activeTeam.players[index] = newName.trim().toUpperCase();
-    saveActiveTeamState();
-  }
-}
-
-function addPlayerToCurrentGroup() {
-  // FEATURE 6 & 7: Maximum 20 players
-  if (activeTeam.players.length >= 20) return alert("Maximum 20 players allowed.");
-  
-  const nextNum = activeTeam.players.length + 1;
-  activeTeam.players.push(`PLAYER ${nextNum}`);
-  renderSuspectsList();
-  updateSetupUI();
-  saveActiveTeamState();
-}
-
-function removePlayer(idx) {
-  // FEATURE 6 & 7: Minimum 3 players
-  if (activeTeam.players.length <= 3) return alert("Minimum 3 players required.");
-  
-  activeTeam.players.splice(idx, 1);
-  renderSuspectsList();
-  updateSetupUI();
-  saveActiveTeamState();
-}
-
-function saveActiveTeamState() {
-  if (activeTeam.id) {
-    const idx = readyTeams.findIndex(t => t.id === activeTeam.id);
-    if (idx !== -1) {
-      readyTeams[idx] = { ...readyTeams[idx], name: activeTeam.name, players: [...activeTeam.players] };
-      localStorage.setItem('undercover_ready_teams', JSON.stringify(readyTeams));
-      renderReadyTeams();
-    }
-  }
-}
-
-// Category selection
-function renderCategoriesGrid() {
-  const grid = document.getElementById('categories-grid');
-  grid.innerHTML = '';
-
-  categoriesData.forEach(cat => {
-    const isSelected = selectedCategories.has(cat.id);
-    grid.innerHTML += `
-      <div class="category-card ${isSelected ? 'selected' : ''}" onclick="toggleCategory('${cat.id}')">
-        <span class="cat-name">${cat.name}</span>
-        <span class="cat-count">${cat.count}</span>
-      </div>
-    `;
-  });
-
-  const allBtn = document.getElementById('cat-btn-all');
-  if (isAllSelected) allBtn.classList.add('selected');
-  else allBtn.classList.remove('selected');
-}
-
-function toggleAllCategories() {
-  if (isAllSelected) {
-    selectedCategories.clear();
-    isAllSelected = false;
-  } else {
-    categoriesData.forEach(c => selectedCategories.add(c.id));
-    isAllSelected = true;
-  }
-  renderCategoriesGrid();
-}
-
-function toggleCategory(catId) {
-  if (selectedCategories.has(catId)) {
-    selectedCategories.delete(catId);
-    isAllSelected = false;
-  } else {
-    selectedCategories.add(catId);
-    if (selectedCategories.size === categoriesData.length) isAllSelected = true;
-  }
-  renderCategoriesGrid();
-}
-
 function adjustRole(role, delta) {
-  const total = activeTeam.players.length;
+  const activeGroup = groups.find(g => g.id === selectedGroupId);
+  const total = activeGroup ? activeGroup.players.length : 0;
+
   if (role === 'undercover') undercoverCount = Math.max(0, undercoverCount + delta);
   if (role === 'mrWhite') mrWhiteCount = Math.max(0, mrWhiteCount + delta);
 
-  if ((undercoverCount + mrWhiteCount) >= total - 1) {
-    if (role === 'undercover') undercoverCount = Math.max(0, total - mrWhiteCount - 2);
-    if (role === 'mrWhite') mrWhiteCount = Math.max(0, total - undercoverCount - 2);
+  if ((undercoverCount + mrWhiteCount) >= total) {
+    if (role === 'undercover') undercoverCount = Math.max(0, total - mrWhiteCount - 1);
+    if (role === 'mrWhite') mrWhiteCount = Math.max(0, total - undercoverCount - 1);
   }
 
   updateSetupUI();
 }
 
 function updateSetupUI() {
-  document.getElementById('cnt-undercover').innerText = undercoverCount;
-  document.getElementById('cnt-mrwhite').innerText = mrWhiteCount;
-  document.getElementById('footer-summary-text').innerText = 
-    `${activeTeam.players.length} players · ${undercoverCount} Spy · ${mrWhiteCount} Mr White`;
+  const activeGroup = groups.find(g => g.id === selectedGroupId);
+  const total = activeGroup ? activeGroup.players.length : 0;
+  const civilians = Math.max(0, total - undercoverCount - mrWhiteCount);
+
+  document.getElementById('setup-player-count').innerText = `Players: ${total}`;
+  document.getElementById('label-civilians').innerText = `👤 ${civilians} Civilians`;
+  document.getElementById('label-undercover').innerText = `🕵️ ${undercoverCount} Undercover`;
+  document.getElementById('label-mrwhite').innerText = `🕵️‍♂️ ${mrWhiteCount} Mr. White`;
 }
 
-function toggleAIMode(enabled) {
-  isAIModeEnabled = enabled;
+function renderGroupsList() {
+  const container = document.getElementById('groups-container');
+  container.innerHTML = '';
+
+  groups.forEach(group => {
+    const isSelected = group.id === selectedGroupId;
+    container.innerHTML += `
+      <div class="group-card" style="background: white; border-radius:16px; padding:12px; margin-bottom:12px; box-shadow:0 2px 4px rgba(0,0,0,0.05);">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <h3 style="color:${group.color}">${group.name} (${group.players.length} Players)</h3>
+          <button class="icon-btn" onclick="openEditGroup('${group.id}')">✏️</button>
+        </div>
+        <button class="primary-btn" style="margin-top:8px; padding:8px; font-size:12px;" onclick="selectGroup('${group.id}')">
+          ${isSelected ? 'Selected' : 'Select'}
+        </button>
+      </div>
+    `;
+  });
 }
 
-function getNextWordPair() {
-  let activePool = categoriesData.filter(c => selectedCategories.has(c.id));
-  if (activePool.length === 0) activePool = categoriesData;
+function selectGroup(groupId) {
+  selectedGroupId = groupId;
+  navigateTo('page-2');
+}
 
-  let allPairs = [];
-  activePool.forEach(c => c.pairs.forEach(p => allPairs.push(p)));
+function openCreateGroup() {
+  editingGroup = { id: 'g_' + Date.now(), name: 'New Group', color: '#38bdf8', players: [] };
+  renderEditGroup();
+  navigateTo('page-4');
+}
 
-  let availablePairs = allPairs.filter(p => !usedWordPairsHistory.has(`${p.civilian}-${p.undercover}`));
-  if (availablePairs.length === 0) {
-    usedWordPairsHistory.clear();
-    availablePairs = allPairs;
+function openEditGroup(groupId) {
+  const target = groups.find(g => g.id === groupId);
+  editingGroup = JSON.parse(JSON.stringify(target));
+  renderEditGroup();
+  navigateTo('page-4');
+}
+
+function renderEditGroup() {
+  document.getElementById('edit-group-name').value = editingGroup.name;
+  const list = document.getElementById('edit-players-list');
+  list.innerHTML = '';
+
+  editingGroup.players.forEach((p, idx) => {
+    list.innerHTML += `
+      <div class="counter-row" style="background:white; padding:8px 12px; border-radius:12px; margin-bottom:6px;">
+        <span style="font-weight:700;">${p.name}</span>
+        <button class="icon-btn" onclick="removePlayerFromGroup(${idx})">🗑️</button>
+      </div>
+    `;
+  });
+}
+
+function addPlayerToGroup() {
+  if (editingGroup.players.length >= 20) return alert("Maximum 20 players allowed.");
+  const name = prompt("Enter player name:");
+  if (name && name.trim()) {
+    const colors = ['#22c55e', '#38bdf8', '#4ade80', '#0284c7', '#22d3ee', '#f43f5e'];
+    editingGroup.players.push({ name: name.trim(), color: colors[Math.floor(Math.random() * colors.length)] });
+    renderEditGroup();
   }
-
-  const selected = availablePairs[Math.floor(Math.random() * availablePairs.length)];
-  usedWordPairsHistory.add(`${selected.civilian}-${selected.undercover}`);
-  updateFreshCardBadge();
-  return selected;
 }
 
-// Gameplay Mechanics
-function startGame() {
-  if (selectedCategories.size === 0) return alert("Please select at least one category.");
+function removePlayerFromGroup(index) {
+  editingGroup.players.splice(index, 1);
+  renderEditGroup();
+}
+
+function saveGroupChanges() {
+  if (editingGroup.players.length < 3) return alert("Group must have at least 3 players.");
+  editingGroup.name = document.getElementById('edit-group-name').value.trim() || 'Group';
   
-  // FEATURE 6 & 7: Check 3 to 20 range
-  if (activeTeam.players.length < 3 || activeTeam.players.length > 20) {
-    return alert("Game requires 3 to 20 players.");
+  const index = groups.findIndex(g => g.id === editingGroup.id);
+  if (index >= 0) {
+    groups[index] = editingGroup;
+  } else {
+    groups.push(editingGroup);
   }
 
-  const colors = ['#22c55e', '#38bdf8', '#4ade80', '#0284c7', '#22d3ee', '#f43f5e', '#a855f7', '#f59e0b'];
+  selectedGroupId = editingGroup.id;
+  saveGroupsToStorage();
+  navigateTo('page-3');
+}
 
-  let players = activeTeam.players.map((pName, idx) => ({
-    name: pName,
-    color: colors[idx % colors.length]
-  })).sort(() => Math.random() - 0.5);
+async function startGame() {
+  const activeGroup = groups.find(g => g.id === selectedGroupId);
+  if (!activeGroup || activeGroup.players.length < 3 || activeGroup.players.length > 20) {
+    return alert("Player count must be between 3 and 20.");
+  }
 
-  currentWordPair = getNextWordPair();
+  let players = [...activeGroup.players].sort(() => Math.random() - 0.5);
+  currentWordPair = await getNextWordPair();
 
   let roles = [];
   for (let i = 0; i < undercoverCount; i++) roles.push('UNDERCOVER');
@@ -291,7 +423,9 @@ function renderCardsGrid() {
   grid.innerHTML = '';
 
   gameCards.forEach((card, idx) => {
-    grid.innerHTML += `<div class="mystery-card ${card.used ? 'used' : ''}" onclick="pickCard(${idx})">❓</div>`;
+    grid.innerHTML += `
+      <div class="mystery-card ${card.used ? 'used' : ''}" onclick="pickCard(${idx})">❓</div>
+    `;
   });
 }
 
@@ -324,13 +458,12 @@ function initDescriptionBoard() {
   isVotingMode = false;
   let activeOnly = activePlayers.filter(p => !p.eliminated).sort(() => Math.random() - 0.5);
 
-  // FEATURE 3: Mr. White can NOT be the person who starts the discussion (Order 1)
   if (activeOnly.length > 1 && activeOnly[0].role === 'MR_WHITE') {
-    const nonWhiteIndex = activeOnly.findIndex(p => p.role !== 'MR_WHITE');
-    if (nonWhiteIndex !== -1) {
+    const nonWhiteIdx = activeOnly.findIndex(p => p.role !== 'MR_WHITE');
+    if (nonWhiteIdx !== -1) {
       const temp = activeOnly[0];
-      activeOnly[0] = activeOnly[nonWhiteIndex];
-      activeOnly[nonWhiteIndex] = temp;
+      activeOnly[0] = activeOnly[nonWhiteIdx];
+      activeOnly[nonWhiteIdx] = temp;
     }
   }
 
@@ -340,14 +473,17 @@ function initDescriptionBoard() {
 
 function renderBoardUI() {
   document.getElementById('board-title').innerText = isVotingMode ? "Elimination Time" : "Description Time";
-  document.getElementById('board-subtitle').innerText = isVotingMode ? "Discuss and vote somebody out!" : "Describe your secret word in order.";
+  document.getElementById('board-subtitle').innerText = isVotingMode 
+    ? "Discuss and vote somebody out by pointing fingers!" 
+    : "Describe your secret word in order.";
+
   document.getElementById('vote-action-btn').innerText = isVotingMode ? "Describe again" : "Go to Vote";
 
   const remainingWhite = activePlayers.filter(p => !p.eliminated && p.role === 'MR_WHITE').length;
   const remainingUndercover = activePlayers.filter(p => !p.eliminated && p.role === 'UNDERCOVER').length;
 
-  document.getElementById('board-count-mrwhite').innerText = remainingWhite;
-  document.getElementById('board-count-undercover').innerText = remainingUndercover;
+  document.getElementById('count-mrwhite').innerText = remainingWhite;
+  document.getElementById('count-undercover').innerText = remainingUndercover;
 
   const grid = document.getElementById('players-board-grid');
   grid.innerHTML = '';
@@ -355,7 +491,10 @@ function renderBoardUI() {
   activePlayers.filter(p => !p.eliminated).forEach(p => {
     grid.innerHTML += `
       <div class="player-card-node">
-        ${isVotingMode ? `<div class="badge-elim" onclick="openEliminateModal('${p.name}')">Eliminate</div>` : `<div class="badge-order">${p.order}</div>`}
+        ${isVotingMode 
+          ? `<div class="badge-elim" onclick="openEliminateModal('${p.name}')">Eliminate</div>` 
+          : `<div class="badge-order">${p.order}</div>`
+        }
         <div class="avatar-large" style="background:${p.color}">${p.name[0]}</div>
         <span class="player-node-name">${p.name}</span>
       </div>
@@ -379,13 +518,21 @@ function openEliminateModal(playerName) {
   container.innerHTML = '';
 
   if (remainingWhite > 0) {
-    container.innerHTML += `<button class="primary-btn dark-btn" onclick="confirmElimination('MR_WHITE')">Eliminate as Mr. White 🕵️‍♂️</button>`;
-  }
-  if (remainingUndercover > 0) {
-    container.innerHTML += `<button class="primary-btn dark-btn" onclick="confirmElimination('UNDERCOVER')">Eliminate as Undercover 🕵️</button>`;
+    container.innerHTML += `
+      <button class="primary-btn dark-btn" onclick="confirmElimination('MR_WHITE')">Eliminate as Mr. White 🕵️‍♂️</button>
+    `;
   }
 
-  container.innerHTML += `<button class="secondary-btn" onclick="closeEliminateModal()">Cancel</button>`;
+  if (remainingUndercover > 0) {
+    container.innerHTML += `
+      <button class="primary-btn dark-btn" onclick="confirmElimination('UNDERCOVER')">Eliminate as Undercover 🕵️</button>
+    `;
+  }
+
+  container.innerHTML += `
+    <button class="secondary-btn" onclick="closeEliminateModal()">Cancel</button>
+  `;
+
   document.getElementById('eliminate-confirm-modal').classList.add('active');
 }
 
@@ -434,16 +581,19 @@ function closeMrWhiteWrongModal() {
   checkWinConditions();
 }
 
+// AUTOMATIC CIVILIAN WIN CONDITION
 function checkWinConditions() {
   const remaining = activePlayers.filter(p => !p.eliminated);
   const remainingInfiltrators = remaining.filter(p => p.role === 'MR_WHITE' || p.role === 'UNDERCOVER');
 
+  // Win condition: All Mr. White and Undercovers are eliminated
   if (remainingInfiltrators.length === 0) {
     winningTeam = 'CIVILIANS';
-    triggerGameOver("All Mr. Whites and Undercovers eliminated! Civilians win!");
+    triggerGameOver("All Infiltrators (Undercovers & Mr. Whites) eliminated! Civilians win!");
     return;
   }
 
+  // Win condition: Infiltrators reach majority or equality
   if (remaining.length <= 2 && remainingInfiltrators.length > 0) {
     winningTeam = 'INFILTRATORS';
     triggerGameOver("Infiltrators achieved majority!");
@@ -454,7 +604,7 @@ function checkWinConditions() {
 }
 
 function triggerGameOver(message) {
-  const titleText = winningTeam === 'CIVILIANS' ? "The Civilians win!" : "The Infiltrators win!";
+  const titleText = winningTeam === 'CIVILIANS' ? "The Civilians win! 🎉" : "The Infiltrators win! 🏆";
   document.getElementById('game-over-title').innerText = titleText;
   document.getElementById('game-over-msg').innerText = message;
   document.getElementById('game-over-modal').classList.add('active');
@@ -492,21 +642,6 @@ function goToSummaryPage() {
   });
 
   navigateTo('page-7');
-}
-
-function navigateTo(pageId, isBack = false) {
-  const currentActive = document.querySelector('.page.active');
-  if (currentActive && !isBack) pageHistory.push(currentActive.id);
-
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById(pageId).classList.add('active');
-}
-
-function confirmQuitGame() {
-  if (confirm("Are you sure you want to quit the current game?")) {
-    pageHistory = [];
-    navigateTo('page-1');
-  }
 }
 
 document.addEventListener('DOMContentLoaded', initApp);
