@@ -1,33 +1,40 @@
+// Categories Data
 const categoriesData = [
-  { id: "Animals", name: "Animals", count: 100, pairs: [{ civilian: "DOG", undercover: "WOLF" }, { civilian: "CAT", undercover: "LION" }] },
-  { id: "Entertainment", name: "Entertainment", count: 100, pairs: [{ civilian: "MOVIE", undercover: "SERIES" }] },
-  { id: "Everyday Life", name: "Everyday Life", count: 100, pairs: [{ civilian: "MORNING", undercover: "EVENING" }] },
-  { id: "Food & Drink", name: "Food & Drink", count: 100, pairs: [{ civilian: "COFFEE", undercover: "TEA" }] },
-  { id: "Nature", name: "Nature", count: 100, pairs: [{ civilian: "RIVER", undercover: "STREAM" }] },
-  { id: "Objects", name: "Objects", count: 100, pairs: [{ civilian: "CHAIR", undercover: "STOOL" }] },
-  { id: "Places", name: "Places", count: 100, pairs: [{ civilian: "PARK", undercover: "GARDEN" }] },
-  { id: "Professions", name: "Professions", count: 100, pairs: [{ civilian: "DOCTOR", undercover: "NURSE" }] },
-  { id: "Sports", name: "Sports", count: 100, pairs: [{ civilian: "FOOTBALL", undercover: "RUGBY" }] },
-  { id: "Travel", name: "Travel", count: 100, pairs: [{ civilian: "PLANE", undercover: "HELICOPTER" }] }
+  { id: "Animals", name: "Animals", count: 100, pairs: [{ civilian: "DOG", undercover: "WOLF" }, { civilian: "CAT", undercover: "LION" }, { civilian: "HORSE", undercover: "DONKEY" }] },
+  { id: "Entertainment", name: "Entertainment", count: 100, pairs: [{ civilian: "MOVIE", undercover: "SERIES" }, { civilian: "CONCERT", undercover: "FESTIVAL" }] },
+  { id: "Everyday Life", name: "Everyday Life", count: 100, pairs: [{ civilian: "MORNING", undercover: "EVENING" }, { civilian: "SLEEP", undercover: "NAP" }] },
+  { id: "Food & Drink", name: "Food & Drink", count: 100, pairs: [{ civilian: "COFFEE", undercover: "TEA" }, { civilian: "BURGER", undercover: "SANDWICH" }] },
+  { id: "Nature", name: "Nature", count: 100, pairs: [{ civilian: "RIVER", undercover: "STREAM" }, { civilian: "FOREST", undercover: "JUNGLE" }] },
+  { id: "Objects", name: "Objects", count: 100, pairs: [{ civilian: "CHAIR", undercover: "STOOL" }, { civilian: "CLOCK", undercover: "WATCH" }] },
+  { id: "Places", name: "Places", count: 100, pairs: [{ civilian: "PARK", undercover: "GARDEN" }, { civilian: "CASTLE", undercover: "PALACE" }] },
+  { id: "Professions", name: "Professions", count: 100, pairs: [{ civilian: "DOCTOR", undercover: "NURSE" }, { civilian: "CHEF", undercover: "COOK" }] },
+  { id: "Sports", name: "Sports", count: 100, pairs: [{ civilian: "FOOTBALL", undercover: "RUGBY" }, { civilian: "TENNIS", undercover: "BADMINTON" }] },
+  { id: "Travel", name: "Travel", count: 100, pairs: [{ civilian: "PLANE", undercover: "HELICOPTER" }, { civilian: "SUITCASE", undercover: "BACKPACK" }] }
 ];
+
+const TOTAL_WORD_PAIRS = 1000;
+
+// Ready Teams State (Stored locally)
+let readyTeams = JSON.parse(localStorage.getItem('undercover_ready_teams')) || [
+  { id: 't1', name: 'Office', badge: 'O', color: '#f97316', players: ["ALEX", "SAM", "JORDAN", "TAYLOR", "CHRIS", "PAT", "MORGAN", "CASEY", "RILEY"] },
+  { id: 't2', name: 'Team 5', badge: 'T5', color: '#6366f1', players: ["SN", "AS", "LA", "AA", "ME", "AB"] },
+  { id: 't3', name: 'Bangalore Friends', badge: 'BF', color: '#10b981', players: ["KIRAN", "RAHUL", "PRIYA", "ANISH", "DEEPA"] }
+];
+
+let activeTeam = {
+  id: null,
+  name: "Friday Night Suspects",
+  players: ["PLAYER 1", "PLAYER 2", "PLAYER 3", "PLAYER 4", "PLAYER 5"]
+};
 
 let selectedCategories = new Set(categoriesData.map(c => c.id));
 let isAllSelected = true;
 
-// Default empty group structure for new games
-let currentTeam = {
-  name: "",
-  players: [
-    { name: "Player 1", color: "#22c55e" },
-    { name: "Player 2", color: "#38bdf8" },
-    { name: "Player 3", color: "#4ade80" },
-    { name: "Player 4", color: "#0284c7" },
-    { name: "Player 5", color: "#f43f5e" }
-  ]
-};
-
 let undercoverCount = 1;
 let mrWhiteCount = 1;
+
+let usedWordPairsHistory = new Set();
+let isAIModeEnabled = true;
 
 let currentWordPair = null;
 let gameCards = [];
@@ -39,65 +46,120 @@ let winningTeam = "";
 let pageHistory = [];
 
 function initApp() {
+  renderReadyTeams();
+  updateFreshCardBadge();
   renderSuspectsList();
   renderCategoriesGrid();
   updateSetupUI();
 }
 
-function startNewGameFromHome() {
-  document.getElementById('team-name-input').value = "";
-  currentTeam.name = "";
-  currentTeam.players = [
-    { name: "Player 1", color: "#22c55e" },
-    { name: "Player 2", color: "#38bdf8" },
-    { name: "Player 3", color: "#4ade80" },
-    { name: "Player 4", color: "#0284c7" },
-    { name: "Player 5", color: "#f43f5e" }
-  ];
+function updateFreshCardBadge() {
+  const remainingCount = TOTAL_WORD_PAIRS - usedWordPairsHistory.size;
+  document.getElementById('home-fresh-badge').innerText = `${remainingCount.toLocaleString()} FRESH`;
+}
+
+function renderReadyTeams() {
+  const container = document.getElementById('ready-teams-container');
+  container.innerHTML = '';
+
+  readyTeams.forEach(t => {
+    container.innerHTML += `
+      <div class="team-card" onclick="selectReadyTeam('${t.id}')">
+        <div class="team-card-badge" style="background:${t.color}">${t.badge}</div>
+        <div class="team-card-title">${t.name}</div>
+        <div class="team-card-sub">${t.players.length} players</div>
+      </div>
+    `;
+  });
+}
+
+function createNewGame() {
+  activeTeam = {
+    id: null,
+    name: "Friday Night Suspects",
+    players: ["PLAYER 1", "PLAYER 2", "PLAYER 3", "PLAYER 4", "PLAYER 5"]
+  };
+  document.getElementById('team-name-input').value = activeTeam.name;
   renderSuspectsList();
   updateSetupUI();
   navigateTo('page-2');
 }
 
+function selectReadyTeam(teamId) {
+  const selected = readyTeams.find(t => t.id === teamId);
+  if (selected) {
+    activeTeam = JSON.parse(JSON.stringify(selected));
+    document.getElementById('team-name-input').value = activeTeam.name;
+    renderSuspectsList();
+    updateSetupUI();
+    navigateTo('page-2');
+  }
+}
+
 function updateTeamName(val) {
-  currentTeam.name = val.trim();
+  activeTeam.name = val.trim() || "Team";
+  saveActiveTeamState();
 }
 
 function renderSuspectsList() {
   const container = document.getElementById('suspects-list-container');
   container.innerHTML = '';
 
-  currentTeam.players.forEach((p, idx) => {
+  activeTeam.players.forEach((pName, idx) => {
     container.innerHTML += `
       <div class="suspect-item">
         <div class="suspect-left">
           <span class="suspect-num">0${idx + 1}</span>
-          <span class="suspect-name">${p.name}</span>
+          <input type="text" class="suspect-edit-input" value="${pName}" onchange="editPlayerName(${idx}, this.value)">
         </div>
         <button class="remove-btn" onclick="removePlayer(${idx})">✕</button>
       </div>
     `;
   });
 
-  document.getElementById('badge-player-count').innerText = currentTeam.players.length;
+  document.getElementById('badge-player-count').innerText = activeTeam.players.length;
+}
+
+function editPlayerName(index, newName) {
+  if (newName.trim()) {
+    activeTeam.players[index] = newName.trim().toUpperCase();
+    saveActiveTeamState();
+  }
 }
 
 function addPlayerToCurrentGroup() {
-  if (currentTeam.players.length >= 20) return alert("Maximum 20 players.");
-  const nextNum = currentTeam.players.length + 1;
-  const colors = ['#22c55e', '#38bdf8', '#4ade80', '#0284c7', '#22d3ee', '#f43f5e'];
-  currentTeam.players.push({ name: `Player ${nextNum}`, color: colors[Math.floor(Math.random() * colors.length)] });
+  // FEATURE 6 & 7: Maximum 20 players
+  if (activeTeam.players.length >= 20) return alert("Maximum 20 players allowed.");
+  
+  const nextNum = activeTeam.players.length + 1;
+  activeTeam.players.push(`PLAYER ${nextNum}`);
   renderSuspectsList();
   updateSetupUI();
+  saveActiveTeamState();
 }
 
 function removePlayer(idx) {
-  if (currentTeam.players.length <= 3) return alert("Minimum 3 players required.");
-  currentTeam.players.splice(idx, 1);
+  // FEATURE 6 & 7: Minimum 3 players
+  if (activeTeam.players.length <= 3) return alert("Minimum 3 players required.");
+  
+  activeTeam.players.splice(idx, 1);
   renderSuspectsList();
   updateSetupUI();
+  saveActiveTeamState();
 }
 
+function saveActiveTeamState() {
+  if (activeTeam.id) {
+    const idx = readyTeams.findIndex(t => t.id === activeTeam.id);
+    if (idx !== -1) {
+      readyTeams[idx] = { ...readyTeams[idx], name: activeTeam.name, players: [...activeTeam.players] };
+      localStorage.setItem('undercover_ready_teams', JSON.stringify(readyTeams));
+      renderReadyTeams();
+    }
+  }
+}
+
+// Category selection
 function renderCategoriesGrid() {
   const grid = document.getElementById('categories-grid');
   grid.innerHTML = '';
@@ -113,11 +175,8 @@ function renderCategoriesGrid() {
   });
 
   const allBtn = document.getElementById('cat-btn-all');
-  if (isAllSelected) {
-    allBtn.classList.add('selected');
-  } else {
-    allBtn.classList.remove('selected');
-  }
+  if (isAllSelected) allBtn.classList.add('selected');
+  else allBtn.classList.remove('selected');
 }
 
 function toggleAllCategories() {
@@ -137,15 +196,13 @@ function toggleCategory(catId) {
     isAllSelected = false;
   } else {
     selectedCategories.add(catId);
-    if (selectedCategories.size === categoriesData.length) {
-      isAllSelected = true;
-    }
+    if (selectedCategories.size === categoriesData.length) isAllSelected = true;
   }
   renderCategoriesGrid();
 }
 
 function adjustRole(role, delta) {
-  const total = currentTeam.players.length;
+  const total = activeTeam.players.length;
   if (role === 'undercover') undercoverCount = Math.max(0, undercoverCount + delta);
   if (role === 'mrWhite') mrWhiteCount = Math.max(0, mrWhiteCount + delta);
 
@@ -161,7 +218,11 @@ function updateSetupUI() {
   document.getElementById('cnt-undercover').innerText = undercoverCount;
   document.getElementById('cnt-mrwhite').innerText = mrWhiteCount;
   document.getElementById('footer-summary-text').innerText = 
-    `${currentTeam.players.length} players · ${undercoverCount} Spy · ${mrWhiteCount} Mr White`;
+    `${activeTeam.players.length} players · ${undercoverCount} Spy · ${mrWhiteCount} Mr White`;
+}
+
+function toggleAIMode(enabled) {
+  isAIModeEnabled = enabled;
 }
 
 function getNextWordPair() {
@@ -169,18 +230,36 @@ function getNextWordPair() {
   if (activePool.length === 0) activePool = categoriesData;
 
   let allPairs = [];
-  activePool.forEach(c => {
-    c.pairs.forEach(p => allPairs.push(p));
-  });
+  activePool.forEach(c => c.pairs.forEach(p => allPairs.push(p)));
 
-  return allPairs[Math.floor(Math.random() * allPairs.length)];
+  let availablePairs = allPairs.filter(p => !usedWordPairsHistory.has(`${p.civilian}-${p.undercover}`));
+  if (availablePairs.length === 0) {
+    usedWordPairsHistory.clear();
+    availablePairs = allPairs;
+  }
+
+  const selected = availablePairs[Math.floor(Math.random() * availablePairs.length)];
+  usedWordPairsHistory.add(`${selected.civilian}-${selected.undercover}`);
+  updateFreshCardBadge();
+  return selected;
 }
 
+// Gameplay Mechanics
 function startGame() {
   if (selectedCategories.size === 0) return alert("Please select at least one category.");
-  if (currentTeam.players.length < 5) return alert("Minimum 5 players required.");
+  
+  // FEATURE 6 & 7: Check 3 to 20 range
+  if (activeTeam.players.length < 3 || activeTeam.players.length > 20) {
+    return alert("Game requires 3 to 20 players.");
+  }
 
-  let players = [...currentTeam.players].sort(() => Math.random() - 0.5);
+  const colors = ['#22c55e', '#38bdf8', '#4ade80', '#0284c7', '#22d3ee', '#f43f5e', '#a855f7', '#f59e0b'];
+
+  let players = activeTeam.players.map((pName, idx) => ({
+    name: pName,
+    color: colors[idx % colors.length]
+  })).sort(() => Math.random() - 0.5);
+
   currentWordPair = getNextWordPair();
 
   let roles = [];
@@ -195,7 +274,7 @@ function startGame() {
     role: roles[idx],
     word: roles[idx] === 'CIVILIAN' ? currentWordPair.civilian : (roles[idx] === 'UNDERCOVER' ? currentWordPair.undercover : 'You are Mr. White!'),
     eliminated: false,
-    order: 0
+    order: idx + 1
   }));
 
   gameCards = activePlayers.map(p => ({ ...p, used: false }));
@@ -241,17 +320,17 @@ function closeCardModal() {
   }
 }
 
-// TURN ORDER RULE: Mr. White CANNOT be the first person to describe/start discussion
 function initDescriptionBoard() {
   isVotingMode = false;
-  let activeOnly = activePlayers.filter(p => !p.eliminated);
+  let activeOnly = activePlayers.filter(p => !p.eliminated).sort(() => Math.random() - 0.5);
 
-  // Shuffle active players until a non-Mr. White player is at index 0
-  let validOrder = false;
-  while (!validOrder) {
-    activeOnly.sort(() => Math.random() - 0.5);
-    if (activeOnly[0].role !== 'MR_WHITE') {
-      validOrder = true;
+  // FEATURE 3: Mr. White can NOT be the person who starts the discussion (Order 1)
+  if (activeOnly.length > 1 && activeOnly[0].role === 'MR_WHITE') {
+    const nonWhiteIndex = activeOnly.findIndex(p => p.role !== 'MR_WHITE');
+    if (nonWhiteIndex !== -1) {
+      const temp = activeOnly[0];
+      activeOnly[0] = activeOnly[nonWhiteIndex];
+      activeOnly[nonWhiteIndex] = temp;
     }
   }
 
@@ -273,7 +352,7 @@ function renderBoardUI() {
   const grid = document.getElementById('players-board-grid');
   grid.innerHTML = '';
 
-  activePlayers.filter(p => !p.eliminated).sort((a,b) => a.order - b.order).forEach(p => {
+  activePlayers.filter(p => !p.eliminated).forEach(p => {
     grid.innerHTML += `
       <div class="player-card-node">
         ${isVotingMode ? `<div class="badge-elim" onclick="openEliminateModal('${p.name}')">Eliminate</div>` : `<div class="badge-order">${p.order}</div>`}
@@ -421,14 +500,6 @@ function navigateTo(pageId, isBack = false) {
 
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById(pageId).classList.add('active');
-}
-
-function goBack() {
-  if (pageHistory.length > 0) {
-    navigateTo(pageHistory.pop(), true);
-  } else {
-    navigateTo('page-1', true);
-  }
 }
 
 function confirmQuitGame() {
