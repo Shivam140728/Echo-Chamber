@@ -1,4 +1,4 @@
-// Categories Pool
+// Exact Categories with 100 Major Word Pairs
 const staticCategoriesPool = [
   {
     category: "Animals",
@@ -96,8 +96,7 @@ let selectedCategories = ["All"];
 let usedWordPairsHistory = new Set();
 let isAIModeEnabled = true;
 
-// Feature 2: Track previous game's Mr. White player name(s)
-let previousMrWhiteNames = [];
+let lastMrWhitePlayerNames = []; // Non-repeating Mr. White tracking state
 
 let unusedPairsDeck = [];
 let winningTeam = ""; 
@@ -132,12 +131,11 @@ let activePlayers = [];
 let isVotingMode = false;
 let playerToEliminate = null;
 
-// FEATURE 1: Save groups to local storage for future games
 function saveGroupsToStorage() {
   localStorage.setItem('undercover_groups', JSON.stringify(groups));
   localStorage.setItem('undercover_selected_group', selectedGroupId);
   localStorage.setItem('undercover_ai_mode', JSON.stringify(isAIModeEnabled));
-  localStorage.setItem('undercover_prev_mrwhite', JSON.stringify(previousMrWhiteNames));
+  localStorage.setItem('undercover_last_mr_white', JSON.stringify(lastMrWhitePlayerNames));
 }
 
 function loadGroupsFromStorage() {
@@ -146,20 +144,20 @@ function loadGroupsFromStorage() {
     try { groups = JSON.parse(storedGroups); } catch (e) { console.error(e); }
   }
 
-  const storedSel = localStorage.getItem('undercover_selected_group');
-  if (storedSel && groups.some(g => g.id === storedSel)) {
-    selectedGroupId = storedSel;
+  const storedSelectedGroup = localStorage.getItem('undercover_selected_group');
+  if (storedSelectedGroup && groups.some(g => g.id === storedSelectedGroup)) {
+    selectedGroupId = storedSelectedGroup;
+  }
+
+  const storedMrWhite = localStorage.getItem('undercover_last_mr_white');
+  if (storedMrWhite) {
+    try { lastMrWhitePlayerNames = JSON.parse(storedMrWhite); } catch (e) { console.error(e); }
   }
 
   const storedAIMode = localStorage.getItem('undercover_ai_mode');
   if (storedAIMode !== null) {
     isAIModeEnabled = JSON.parse(storedAIMode);
     document.getElementById('ai-mode-switch').checked = isAIModeEnabled;
-  }
-
-  const storedPrevMW = localStorage.getItem('undercover_prev_mrwhite');
-  if (storedPrevMW) {
-    try { previousMrWhiteNames = JSON.parse(storedPrevMW); } catch (e) { console.error(e); }
   }
 }
 
@@ -314,7 +312,6 @@ function updateSetupUI() {
   document.getElementById('label-mrwhite').innerText = `🕵️‍♂️ ${mrWhiteCount} Mr. White`;
 }
 
-// FEATURE 1: Render groups list under "YOUR CREWS / Ready teams"
 function renderGroupsList() {
   const container = document.getElementById('groups-container');
   container.innerHTML = '';
@@ -322,16 +319,13 @@ function renderGroupsList() {
   groups.forEach(group => {
     const isSelected = group.id === selectedGroupId;
     container.innerHTML += `
-      <div class="group-card" style="background: white; border-radius:16px; padding:12px; margin-bottom:12px; box-shadow:0 2px 4px rgba(0,0,0,0.05); border: ${isSelected ? '2px solid #38bdf8' : '1px solid #e2e8f0'}">
+      <div class="group-card" style="background: white; border-radius:16px; padding:12px; margin-bottom:12px; box-shadow:0 2px 4px rgba(0,0,0,0.05);">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-          <div>
-            <h3 style="color:${group.color}; font-size:16px; font-weight:800;">${group.name}</h3>
-            <span style="font-size:12px; color:#64748b; font-weight:600;">${group.players.length} Players</span>
-          </div>
+          <h3 style="color:${group.color}">${group.name} (${group.players.length} Players)</h3>
           <button class="icon-btn" onclick="openEditGroup('${group.id}')">✏️</button>
         </div>
-        <button class="primary-btn" style="margin-top:10px; padding:8px; font-size:13px; background:${isSelected ? '#0284c7' : '#22c55e'}" onclick="selectGroup('${group.id}')">
-          ${isSelected ? 'Selected' : 'Select Team'}
+        <button class="primary-btn" style="margin-top:8px; padding:8px; font-size:12px;" onclick="selectGroup('${group.id}')">
+          ${isSelected ? 'Selected' : 'Select'}
         </button>
       </div>
     `;
@@ -345,13 +339,7 @@ function selectGroup(groupId) {
 }
 
 function openCreateGroup() {
-  const colors = ['#f43f5e', '#38bdf8', '#4ade80', '#0284c7', '#22d3ee', '#8b5cf6'];
-  editingGroup = { 
-    id: 'g_' + Date.now(), 
-    name: 'New Crew', 
-    color: colors[Math.floor(Math.random() * colors.length)], 
-    players: [] 
-  };
+  editingGroup = { id: 'g_' + Date.now(), name: 'New Group', color: '#38bdf8', players: [] };
   renderEditGroup();
   navigateTo('page-4');
 }
@@ -393,10 +381,9 @@ function removePlayerFromGroup(index) {
   renderEditGroup();
 }
 
-// FEATURE 1: Save created/edited group permanently for future games
 function saveGroupChanges() {
   if (editingGroup.players.length < 3) return alert("Group must have at least 3 players.");
-  editingGroup.name = document.getElementById('edit-group-name').value.trim() || 'New Crew';
+  editingGroup.name = document.getElementById('edit-group-name').value.trim() || 'Group';
   
   const index = groups.findIndex(g => g.id === editingGroup.id);
   if (index >= 0) {
@@ -410,71 +397,69 @@ function saveGroupChanges() {
   navigateTo('page-3');
 }
 
-// FEATURE 2: Non-repeating Mr. White role assignment logic
+// NON-REPEATING MR. WHITE ROLE ASSIGNMENT ENGINE
 async function startGame() {
   const activeGroup = groups.find(g => g.id === selectedGroupId);
   if (!activeGroup || activeGroup.players.length < 3 || activeGroup.players.length > 20) {
     return alert("Player count must be between 3 and 20.");
   }
 
-  let players = [...activeGroup.players];
+  let playersPool = [...activeGroup.players].sort(() => Math.random() - 0.5);
   currentWordPair = await getNextWordPair();
 
-  // Role Assignment with Non-Repeating Mr. White check
-  let assignedRoles = new Array(players.length).fill(null);
-
-  // 1. Assign Mr. White(s) preventing consecutive repetition
-  let eligibleForMrWhite = players.filter(p => !previousMrWhiteNames.includes(p.name));
+  // Pick candidates for Mr. White excluding previous match's Mr. White
+  let eligibleMrWhiteCandidates = playersPool.filter(p => !lastMrWhitePlayerNames.includes(p.name));
   
-  // If everyone was previous Mr. White or not enough eligible, fallback to all players
-  if (eligibleForMrWhite.length < mrWhiteCount) {
-    eligibleForMrWhite = [...players];
+  // Fallback if all players in group were previous Mr. Whites
+  if (eligibleMrWhiteCandidates.length < mrWhiteCount) {
+    eligibleMrWhiteCandidates = playersPool;
   }
 
-  eligibleForMrWhite.sort(() => Math.random() - 0.5);
-  let newMrWhiteNames = [];
+  // Shuffle candidate pool
+  eligibleMrWhiteCandidates.sort(() => Math.random() - 0.5);
 
+  let chosenMrWhites = [];
   for (let i = 0; i < mrWhiteCount; i++) {
-    const selectedMWPlayer = eligibleForMrWhite[i];
-    const originalIdx = players.findIndex(p => p.name === selectedMWPlayer.name);
-    assignedRoles[originalIdx] = 'MR_WHITE';
-    newMrWhiteNames.push(selectedMWPlayer.name);
+    if (eligibleMrWhiteCandidates[i]) {
+      chosenMrWhites.push(eligibleMrWhiteCandidates[i].name);
+    }
   }
 
-  // Save current Mr White(s) for the next game check
-  previousMrWhiteNames = newMrWhiteNames;
+  // Save chosen Mr. White names for subsequent games
+  lastMrWhitePlayerNames = [...chosenMrWhites];
   saveGroupsToStorage();
 
-  // 2. Assign Undercover(s) and Civilians to remaining slots
-  let remainingUnassignedIdxs = [];
-  assignedRoles.forEach((r, idx) => {
-    if (r === null) remainingUnassignedIdxs.push(idx);
+  // Filter remaining candidate pool for Undercovers and Civilians
+  let remainingPlayers = playersPool.filter(p => !chosenMrWhites.includes(p.name));
+  remainingPlayers.sort(() => Math.random() - 0.5);
+
+  let chosenUndercovers = [];
+  for (let i = 0; i < undercoverCount; i++) {
+    if (remainingPlayers[i]) {
+      chosenUndercovers.push(remainingPlayers[i].name);
+    }
+  }
+
+  // Assign designated roles to player instances
+  activePlayers = playersPool.map((p, idx) => {
+    let assignedRole = 'CIVILIAN';
+    if (chosenMrWhites.includes(p.name)) {
+      assignedRole = 'MR_WHITE';
+    } else if (chosenUndercovers.includes(p.name)) {
+      assignedRole = 'UNDERCOVER';
+    }
+
+    return {
+      name: p.name,
+      color: p.color,
+      role: assignedRole,
+      word: assignedRole === 'CIVILIAN' ? currentWordPair.civilian : (assignedRole === 'UNDERCOVER' ? currentWordPair.undercover : 'You are Mr. White!'),
+      eliminated: false,
+      order: idx + 1
+    };
   });
 
-  remainingUnassignedIdxs.sort(() => Math.random() - 0.5);
-
-  for (let i = 0; i < undercoverCount; i++) {
-    const unassignedIdx = remainingUnassignedIdxs.pop();
-    assignedRoles[unassignedIdx] = 'UNDERCOVER';
-  }
-
-  while (remainingUnassignedIdxs.length > 0) {
-    const unassignedIdx = remainingUnassignedIdxs.pop();
-    assignedRoles[unassignedIdx] = 'CIVILIAN';
-  }
-
-  // Create Active Players
-  activePlayers = players.map((p, idx) => ({
-    name: p.name,
-    color: p.color,
-    role: assignedRoles[idx],
-    word: assignedRoles[idx] === 'CIVILIAN' ? currentWordPair.civilian : (assignedRoles[idx] === 'UNDERCOVER' ? currentWordPair.undercover : 'You are Mr. White!'),
-    eliminated: false,
-    order: idx + 1
-  }));
-
-  // Shuffle card order for picking
-  gameCards = [...activePlayers].sort(() => Math.random() - 0.5).map(p => ({ ...p, used: false }));
+  gameCards = activePlayers.map(p => ({ ...p, used: false }));
   currentPickerIndex = 0;
   isVotingMode = false;
 
