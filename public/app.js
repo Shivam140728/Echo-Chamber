@@ -1,14 +1,98 @@
-// Comprehensive Multi-Category Offline Word Pool
+// Exact Categories from Image with 100 Major Word Pairs
 const staticCategoriesPool = [
-  { category: "Transport", pairs: [{ civilian: "ESCALATOR", undercover: "ELEVATOR" }, { civilian: "CAR", undercover: "MOTORBIKE" }, { civilian: "TRAIN", undercover: "METRO" }] },
-  { category: "Food & Drink", pairs: [{ civilian: "COFFEE", undercover: "TEA" }, { civilian: "APPLE", undercover: "PEAR" }, { civilian: "BURGER", undercover: "SANDWICH" }, { civilian: "ICE CREAM", undercover: "FROZEN YOGURT" }] },
-  { category: "Technology", pairs: [{ civilian: "LAPTOP", undercover: "TABLET" }, { civilian: "HEADPHONES", undercover: "EARBUDS" }, { civilian: "KEYBOARD", undercover: "KEYPAD" }] },
-  { category: "Music & Art", pairs: [{ civilian: "GUITAR", undercover: "UKULELE" }, { civilian: "PIANO", undercover: "ORGAN" }, { civilian: "PAINTING", undercover: "SKETCH" }] },
-  { category: "Objects & Tools", pairs: [{ civilian: "SHOWER", undercover: "BATH" }, { civilian: "PENCIL", undercover: "PEN" }, { civilian: "CHAIR", undercover: "STOOL" }] },
-  { category: "Animals & Nature", pairs: [{ civilian: "LEOPARD", undercover: "CHEETAH" }, { civilian: "RIVER", undercover: "STREAM" }, { civilian: "OCEAN", undercover: "SEA" }] },
-  { category: "Places & Buildings", pairs: [{ civilian: "CASTLE", undercover: "PALACE" }, { civilian: "HOTEL", undercover: "MOTEL" }, { civilian: "PARK", undercover: "GARDEN" }] }
+  {
+    category: "Animals",
+    pairs: [
+      { civilian: "LION", undercover: "TIGER" }, { civilian: "LEOPARD", undercover: "CHEETAH" }, { civilian: "DOLPHIN", undercover: "WHALE" },
+      { civilian: "EAGLE", undercover: "HAWK" }, { civilian: "DOG", undercover: "WOLF" }, { civilian: "CAT", undercover: "PANTHER" },
+      { civilian: "HORSE", undercover: "DONKEY" }, { civilian: "FROG", undercover: "TOAD" }, { civilian: "ALLIGATOR", undercover: "CROCODILE" },
+      { civilian: "RABBIT", undercover: "HARE" }
+    ]
+  },
+  {
+    category: "Entertainment",
+    pairs: [
+      { civilian: "MOVIE", undercover: "SERIES" }, { civilian: "CONCERT", undercover: "FESTIVAL" }, { civilian: "THEATER", undercover: "CINEMA" },
+      { civilian: "MAGICIAN", undercover: "ILLUSIONIST" }, { civilian: "CIRCUS", undercover: "CARNIVAL" }, { civilian: "ACTOR", undercover: "DIRECTOR" },
+      { civilian: "DRAMA", undercover: "COMEDY" }, { civilian: "CARTOON", undercover: "ANIME" }, { civilian: "MUSICAL", undercover: "OPERA" },
+      { civilian: "TICKET", undercover: "PASS" }
+    ]
+  },
+  {
+    category: "Everyday Life",
+    pairs: [
+      { civilian: "ALARM", undercover: "TIMER" }, { civilian: "MIRROR", undercover: "WINDOW" }, { civilian: "SOAP", undercover: "SHAMPOO" },
+      { civilian: "BED", undercover: "SOFA" }, { civilian: "WALLET", undercover: "PURSE" }, { civilian: "SHOWER", undercover: "BATH" },
+      { civilian: "UMBRELLA", undercover: "RAINCOAT" }, { civilian: "KEY", undercover: "LOCK" }, { civilian: "CLOCK", undercover: "WATCH" },
+      { civilian: "BLANKET", undercover: "QUILT" }
+    ]
+  },
+  {
+    category: "Food & Drink",
+    pairs: [
+      { civilian: "COFFEE", undercover: "TEA" }, { civilian: "APPLE", undercover: "PEAR" }, { civilian: "BURGER", undercover: "SANDWICH" },
+      { civilian: "ICE CREAM", undercover: "FROZEN YOGURT" }, { civilian: "PIZZA", undercover: "PASTA" }, { civilian: "JUICE", undercover: "SMOOTHIE" },
+      { civilian: "CHOCOLATE", undercover: "CANDY" }, { civilian: "CAKE", undercover: "PASTRY" }, { civilian: "RICE", undercover: "NOODLES" },
+      { civilian: "BUTTER", undercover: "CHEESE" }
+    ]
+  },
+  {
+    category: "Nature",
+    pairs: [
+      { civilian: "RIVER", undercover: "STREAM" }, { civilian: "OCEAN", undercover: "SEA" }, { civilian: "MOUNTAIN", undercover: "HILL" },
+      { civilian: "FOREST", undercover: "JUNGLE" }, { civilian: "DESERT", undercover: "SAVANNA" }, { civilian: "VOLCANO", undercover: "CANYON" },
+      { civilian: "ISLAND", undercover: "PENINSULA" }, { civilian: "RAIN", undercover: "SNOW" }, { civilian: "WIND", undercover: "STORM" },
+      { civilian: "SUNFLOWER", undercover: "ROSE" }
+    ]
+  },
+  {
+    category: "Objects",
+    pairs: [
+      { civilian: "PENCIL", undercover: "PEN" }, { civilian: "CHAIR", undercover: "STOOL" }, { civilian: "TABLE", undercover: "DESK" },
+      { civilian: "SCISSORS", undercover: "KNIFE" }, { civilian: "BOTTLE", undercover: "GLASS" }, { civilian: "BAG", undercover: "BACKPACK" },
+      { civilian: "LAMP", undercover: "FLASHLIGHT" }, { civilian: "BOOK", undercover: "MAGAZINE" }, { civilian: "PHONE", undercover: "TABLET" },
+      { civilian: "CAMERA", undercover: "TELESCOPE" }
+    ]
+  },
+  {
+    category: "Places",
+    pairs: [
+      { civilian: "CASTLE", undercover: "PALACE" }, { civilian: "HOTEL", undercover: "MOTEL" }, { civilian: "PARK", undercover: "GARDEN" },
+      { civilian: "SCHOOL", undercover: "COLLEGE" }, { civilian: "LIBRARY", undercover: "MUSEUM" }, { civilian: "HOSPITAL", undercover: "CLINIC" },
+      { civilian: "AIRPORT", undercover: "STATION" }, { civilian: "MALL", undercover: "MARKET" }, { civilian: "BEACH", undercover: "COAST" },
+      { civilian: "CITY", undercover: "VILLAGE" }
+    ]
+  },
+  {
+    category: "Professions",
+    pairs: [
+      { civilian: "DOCTOR", undercover: "NURSE" }, { civilian: "PILOT", undercover: "CAPTAIN" }, { civilian: "CHEF", undercover: "BAKER" },
+      { civilian: "POLICE", undercover: "GUARD" }, { civilian: "TEACHER", undercover: "PROFESSOR" }, { civilian: "FIREFIGHER", undercover: "RESCUER" },
+      { civilian: "LAWYER", undercover: "JUDGE" }, { civilian: "ENGINEER", undercover: "ARCHITECT" }, { civilian: "SINGER", undercover: "MUSICIAN" },
+      { civilian: "FARMER", undercover: "GARDENER" }
+    ]
+  },
+  {
+    category: "Sports",
+    pairs: [
+      { civilian: "FOOTBALL", undercover: "RUGBY" }, { civilian: "TENNIS", undercover: "BADMINTON" }, { civilian: "BASEBALL", undercover: "CRICKET" },
+      { civilian: "SWIMMING", undercover: "DIVING" }, { civilian: "SKATING", undercover: "SKIING" }, { civilian: "BOXING", undercover: "WRESTLING" },
+      { civilian: "BASKETBALL", undercover: "VOLLEYBALL" }, { civilian: "GOLF", undercover: "BOWLING" }, { civilian: "RUNNING", undercover: "JOGGING" },
+      { civilian: "SURFING", undercover: "SAILING" }
+    ]
+  },
+  {
+    category: "Travel",
+    pairs: [
+      { civilian: "PASSPORT", undercover: "VISA" }, { civilian: "SUITCASE", undercover: "DUFFEL" }, { civilian: "FLIGHT", undercover: "CRUISE" },
+      { civilian: "MAP", undercover: "COMPASS" }, { civilian: "GUIDE", undercover: "TRANSLATOR" }, { civilian: "TAXI", undercover: "BUS" },
+      { civilian: "TENT", undercover: "CABIN" }, { civilian: "SOUVENIR", undercover: "GIFT" }, { civilian: "RESORT", undercover: "CAMP" },
+      { civilian: "TICKET", undercover: "BOARDING PASS" }
+    ]
+  }
 ];
 
+let selectedCategories = ["All"];
 let usedWordPairsHistory = new Set();
 let isAIModeEnabled = true;
 
@@ -19,7 +103,7 @@ let pageHistory = [];
 let groups = [
   {
     id: 'g1',
-    name: 'V5',
+    name: 'Team 5',
     color: '#f43f5e',
     players: [
       { name: 'Shivam', color: '#22c55e' },
@@ -45,7 +129,6 @@ let activePlayers = [];
 let isVotingMode = false;
 let playerToEliminate = null;
 
-// LocalStorage Persistence
 function saveGroupsToStorage() {
   localStorage.setItem('undercover_groups', JSON.stringify(groups));
   localStorage.setItem('undercover_ai_mode', JSON.stringify(isAIModeEnabled));
@@ -69,16 +152,50 @@ function toggleAIMode(enabled) {
   saveGroupsToStorage();
 }
 
-// FEATURE 1: AI Word Generation Engine with Non-Repeating Memory
+// Category Selection Logic
+function toggleCategory(catName) {
+  if (catName === 'All') {
+    selectedCategories = ['All'];
+  } else {
+    selectedCategories = selectedCategories.filter(c => c !== 'All');
+    if (selectedCategories.includes(catName)) {
+      selectedCategories = selectedCategories.filter(c => c !== catName);
+    } else {
+      selectedCategories.push(catName);
+    }
+
+    if (selectedCategories.length === 0) {
+      selectedCategories = ['All'];
+    }
+  }
+
+  renderCategoriesUI();
+}
+
+function renderCategoriesUI() {
+  const chips = document.querySelectorAll('.category-chip');
+  chips.forEach(chip => {
+    const text = chip.innerText.replace('✨ ', '');
+    if (selectedCategories.includes('All') && text.includes('All')) {
+      chip.classList.add('active');
+    } else if (!selectedCategories.includes('All') && selectedCategories.includes(text)) {
+      chip.classList.add('active');
+    } else {
+      chip.classList.remove('active');
+    }
+  });
+}
+
+// AI / Word Pair Engine
 async function getNextWordPair() {
   if (isAIModeEnabled) {
     try {
-      const categoryList = ["Animals", "Food", "Tech", "Vehicles", "Sports", "Nature", "Household", "Jobs", "Clothing"];
-      const randomCat = categoryList[Math.floor(Math.random() * categoryList.length)];
+      const availableCategories = selectedCategories.includes('All') 
+        ? ["Animals", "Entertainment", "Everyday Life", "Food & Drink", "Nature", "Objects", "Places", "Professions", "Sports", "Travel"]
+        : selectedCategories;
+
+      const randomCat = availableCategories[Math.floor(Math.random() * availableCategories.length)];
       
-      const historyArr = Array.from(usedWordPairsHistory).slice(-30).join(", ");
-      
-      // Dynamic AI fetch simulated via reliable Word-Pair API structure
       const response = await fetch(`https://api.datamuse.com/words?ml=${encodeURIComponent(randomCat)}&max=10`);
       const data = await response.json();
       
@@ -100,16 +217,18 @@ async function getNextWordPair() {
   // Local Deck Fallback Mode
   if (unusedPairsDeck.length === 0) {
     staticCategoriesPool.forEach(cat => {
-      cat.pairs.forEach(pair => {
-        const pairKey = `${pair.civilian}-${pair.undercover}`;
-        if (!usedWordPairsHistory.has(pairKey)) {
-          unusedPairsDeck.push({ ...pair, category: cat.category });
-        }
-      });
+      if (selectedCategories.includes('All') || selectedCategories.includes(cat.category)) {
+        cat.pairs.forEach(pair => {
+          const pairKey = `${pair.civilian}-${pair.undercover}`;
+          if (!usedWordPairsHistory.has(pairKey)) {
+            unusedPairsDeck.push({ ...pair, category: cat.category });
+          }
+        });
+      }
     });
 
     if (unusedPairsDeck.length === 0) {
-      usedWordPairsHistory.clear(); // Reset history if all exhausted
+      usedWordPairsHistory.clear();
       return getNextWordPair();
     }
 
@@ -121,13 +240,12 @@ async function getNextWordPair() {
   return selected;
 }
 
-// App Initialization
 function initApp() {
   loadGroupsFromStorage();
   updateSetupUI();
+  renderCategoriesUI();
 }
 
-// Navigation
 function navigateTo(pageId, isBack = false) {
   const currentActive = document.querySelector('.page.active');
   if (currentActive && !isBack) {
@@ -157,7 +275,6 @@ function confirmQuitGame() {
   }
 }
 
-// Game Setup
 function adjustRole(role, delta) {
   const activeGroup = groups.find(g => g.id === selectedGroupId);
   const total = activeGroup ? activeGroup.players.length : 0;
@@ -184,7 +301,6 @@ function updateSetupUI() {
   document.getElementById('label-mrwhite').innerText = `🕵️‍♂️ ${mrWhiteCount} Mr. White`;
 }
 
-// Group Management
 function renderGroupsList() {
   const container = document.getElementById('groups-container');
   container.innerHTML = '';
@@ -269,7 +385,6 @@ function saveGroupChanges() {
   navigateTo('page-3');
 }
 
-// Game Start Execution
 async function startGame() {
   const activeGroup = groups.find(g => g.id === selectedGroupId);
   if (!activeGroup || activeGroup.players.length < 3 || activeGroup.players.length > 20) {
@@ -302,7 +417,6 @@ async function startGame() {
   navigateTo('page-5');
 }
 
-// Card Reveal Selection
 function renderCardsGrid() {
   document.getElementById('current-picker-name').innerText = gameCards[currentPickerIndex].name;
   const grid = document.getElementById('cards-grid');
@@ -340,7 +454,6 @@ function closeCardModal() {
   }
 }
 
-// Gameplay Board
 function initDescriptionBoard() {
   isVotingMode = false;
   let activeOnly = activePlayers.filter(p => !p.eliminated).sort(() => Math.random() - 0.5);
@@ -394,7 +507,6 @@ function toggleVoteMode() {
   renderBoardUI();
 }
 
-// FEATURE 2: No Civilian Elimination Option
 function openEliminateModal(playerName) {
   playerToEliminate = activePlayers.find(p => p.name === playerName);
   document.getElementById('elim-player-title').innerText = `Eliminate ${playerToEliminate.name}?`;
@@ -469,16 +581,19 @@ function closeMrWhiteWrongModal() {
   checkWinConditions();
 }
 
+// AUTOMATIC CIVILIAN WIN CONDITION
 function checkWinConditions() {
   const remaining = activePlayers.filter(p => !p.eliminated);
   const remainingInfiltrators = remaining.filter(p => p.role === 'MR_WHITE' || p.role === 'UNDERCOVER');
 
+  // Win condition: All Mr. White and Undercovers are eliminated
   if (remainingInfiltrators.length === 0) {
     winningTeam = 'CIVILIANS';
-    triggerGameOver("All Infiltrators eliminated!");
+    triggerGameOver("All Infiltrators (Undercovers & Mr. Whites) eliminated! Civilians win!");
     return;
   }
 
+  // Win condition: Infiltrators reach majority or equality
   if (remaining.length <= 2 && remainingInfiltrators.length > 0) {
     winningTeam = 'INFILTRATORS';
     triggerGameOver("Infiltrators achieved majority!");
@@ -489,7 +604,7 @@ function checkWinConditions() {
 }
 
 function triggerGameOver(message) {
-  const titleText = winningTeam === 'CIVILIANS' ? "The Civilians win!" : "The Infiltrators win!";
+  const titleText = winningTeam === 'CIVILIANS' ? "The Civilians win! 🎉" : "The Infiltrators win! 🏆";
   document.getElementById('game-over-title').innerText = titleText;
   document.getElementById('game-over-msg').innerText = message;
   document.getElementById('game-over-modal').classList.add('active');

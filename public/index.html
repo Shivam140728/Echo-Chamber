@@ -52,11 +52,29 @@
         </div>
       </div>
 
+      <!-- CATEGORY SELECTION SECTION -->
+      <div class="category-section">
+        <div class="section-label">Choose Categories</div>
+        <div class="category-grid" id="category-grid">
+          <button class="category-chip active" id="cat-all" onclick="toggleCategory('All')">✨ All Categories</button>
+          <button class="category-chip" onclick="toggleCategory('Animals')">Animals</button>
+          <button class="category-chip" onclick="toggleCategory('Entertainment')">Entertainment</button>
+          <button class="category-chip" onclick="toggleCategory('Everyday Life')">Everyday Life</button>
+          <button class="category-chip" onclick="toggleCategory('Food & Drink')">Food & Drink</button>
+          <button class="category-chip" onclick="toggleCategory('Nature')">Nature</button>
+          <button class="category-chip" onclick="toggleCategory('Objects')">Objects</button>
+          <button class="category-chip" onclick="toggleCategory('Places')">Places</button>
+          <button class="category-chip" onclick="toggleCategory('Professions')">Professions</button>
+          <button class="category-chip" onclick="toggleCategory('Sports')">Sports</button>
+          <button class="category-chip" onclick="toggleCategory('Travel')">Travel</button>
+        </div>
+      </div>
+
       <!-- AI WORD GENERATION TOGGLE -->
       <div class="ai-toggle-box">
         <div class="ai-toggle-info">
           <span class="ai-toggle-title">🤖 AI Word Generator</span>
-          <span class="ai-toggle-desc">Infinite words across all categories</span>
+          <span class="ai-toggle-desc">Dynamic non-repeating words</span>
         </div>
         <label class="switch">
           <input type="checkbox" id="ai-mode-switch" checked onchange="toggleAIMode(this.checked)">
@@ -64,7 +82,7 @@
         </label>
       </div>
 
-      <button class="primary-btn" onclick="startGame()">Start</button>
+      <button class="primary-btn" onclick="startGame()">Start Game</button>
     </div>
 
     <!-- PAGE 3: GROUPS PAGE -->
@@ -152,7 +170,7 @@
       </div>
 
       <div class="summary-header">
-        <h2 id="summary-title" class="summary-title">The Infiltrators win!</h2>
+        <h2 id="summary-title" class="summary-title">The Civilians win! 🎉</h2>
         <div class="summary-words-box">
           <p>👤 Civilian Word: <b id="sum-civilian-word">ESCALATOR</b></p>
           <p>🕵️ Undercover Word: <b id="sum-undercover-word">ELEVATOR</b></p>
@@ -224,7 +242,7 @@
           <span class="spy-icon-large">🕵️</span>
           <span class="spy-icon-large">🕵️‍♂️</span>
         </div>
-        <div class="win-ribbon" id="game-over-title">The Infiltrators win!</div>
+        <div class="win-ribbon" id="game-over-title">The Civilians win!</div>
         <p id="game-over-msg" class="modal-subtitle" style="margin-top: 10px; color: white;"></p>
         <button class="primary-btn" onclick="goToSummaryPage()" style="margin-top: 15px; background: white; color: #ef4444;">View Game Results</button>
       </div>
