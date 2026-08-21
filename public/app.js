@@ -299,7 +299,7 @@ function initDescriptionBoard() {
   isVotingMode = false;
   let activeOnly = activePlayers.filter(p => !p.eliminated).sort(() => Math.random() - 0.5);
 
-  // RULE: First person to describe CANNOT be Mr. White
+  // FEATURE 1: First person to describe CANNOT be Mr. White
   if (activeOnly.length > 1 && activeOnly[0].role === 'MR_WHITE') {
     const nonWhiteIdx = activeOnly.findIndex(p => p.role !== 'MR_WHITE');
     if (nonWhiteIdx !== -1) {
@@ -349,9 +349,34 @@ function toggleVoteMode() {
   renderBoardUI();
 }
 
+// FEATURE 5: Dynamic Elimination Modal Options based on remaining active roles
 function openEliminateModal(playerName) {
   playerToEliminate = activePlayers.find(p => p.name === playerName);
   document.getElementById('elim-player-title').innerText = `Eliminate ${playerToEliminate.name}?`;
+
+  const remainingWhite = activePlayers.filter(p => !p.eliminated && p.role === 'MR_WHITE').length;
+  const remainingUndercover = activePlayers.filter(p => !p.eliminated && p.role === 'UNDERCOVER').length;
+
+  const container = document.getElementById('elimination-options-container');
+  container.innerHTML = '';
+
+  if (remainingWhite > 0) {
+    container.innerHTML += `
+      <button class="primary-btn dark-btn" onclick="confirmElimination('MR_WHITE')">Eliminate as Mr. White 🕵️‍♂️</button>
+    `;
+  }
+
+  if (remainingUndercover > 0) {
+    container.innerHTML += `
+      <button class="primary-btn dark-btn" onclick="confirmElimination('UNDERCOVER')">Eliminate as Undercover 🕵️</button>
+    `;
+  }
+
+  container.innerHTML += `
+    <button class="primary-btn dark-btn" onclick="confirmElimination('CIVILIAN')">Eliminate as Civilian 👤</button>
+    <button class="secondary-btn" onclick="closeEliminateModal()">Cancel</button>
+  `;
+
   document.getElementById('eliminate-confirm-modal').classList.add('active');
 }
 
@@ -383,6 +408,7 @@ function handleResultModalOk() {
   }
 }
 
+// FEATURE 2: Incorrect Mr White Guess Popup Flow
 function submitMrWhiteGuess() {
   const guess = document.getElementById('mrwhite-word-input').value.trim().toUpperCase();
   document.getElementById('mrwhite-guess-modal').classList.remove('active');

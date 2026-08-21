@@ -167,12 +167,10 @@
     <div class="modal-overlay" id="eliminate-confirm-modal">
       <div class="modal-card">
         <h3 id="elim-player-title" class="modal-player-title">Eliminate Player?</h3>
-        <p class="modal-subtitle">Are you eliminating this player as Mr. White or Undercover?</p>
+        <p class="modal-subtitle">Select role for elimination:</p>
         
-        <div class="modal-actions-row flex-column">
-          <button class="primary-btn dark-btn" onclick="confirmElimination('MR_WHITE')">Eliminate as Mr. White 🕵️‍♂️</button>
-          <button class="primary-btn dark-btn" onclick="confirmElimination('UNDERCOVER')">Eliminate as Undercover 🕵️</button>
-          <button class="secondary-btn" onclick="closeEliminateModal()">Cancel</button>
+        <div class="modal-actions-row flex-column" id="elimination-options-container">
+          <!-- Dynamic Role Buttons (Mr White / Undercover / Civilian) generated via JS -->
         </div>
       </div>
     </div>

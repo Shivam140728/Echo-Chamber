@@ -42,7 +42,7 @@ body {
   display: flex;
 }
 
-/* Navigation & Icon Buttons */
+/* Navigation & Controls */
 .icon-btn {
   background: none;
   border: none;
@@ -258,7 +258,7 @@ body {
   font-size: 20px;
 }
 
-/* Dynamic Winning Popup Banner */
+/* Winning Popup Banner */
 .banner-card {
   background: #ef4444 !important;
   color: white;
