@@ -42,6 +42,27 @@ body {
   display: flex;
 }
 
+/* Group Crews Section */
+.section-header-box {
+  margin-top: 10px;
+  margin-bottom: 14px;
+}
+
+.crews-label {
+  font-size: 11px;
+  font-weight: 800;
+  color: #94a3b8;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  display: block;
+}
+
+.crews-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
 /* Category Selection Grid */
 .category-section {
   margin: 12px 0;
