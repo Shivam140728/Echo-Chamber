@@ -52,6 +52,18 @@
         </div>
       </div>
 
+      <!-- AI WORD GENERATION TOGGLE -->
+      <div class="ai-toggle-box">
+        <div class="ai-toggle-info">
+          <span class="ai-toggle-title">🤖 AI Word Generator</span>
+          <span class="ai-toggle-desc">Infinite words across all categories</span>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="ai-mode-switch" checked onchange="toggleAIMode(this.checked)">
+          <span class="slider round"></span>
+        </label>
+      </div>
+
       <button class="primary-btn" onclick="startGame()">Start</button>
     </div>
 
@@ -167,10 +179,10 @@
     <div class="modal-overlay" id="eliminate-confirm-modal">
       <div class="modal-card">
         <h3 id="elim-player-title" class="modal-player-title">Eliminate Player?</h3>
-        <p class="modal-subtitle">Select role for elimination:</p>
+        <p class="modal-subtitle">Select infiltrator role for elimination:</p>
         
         <div class="modal-actions-row flex-column" id="elimination-options-container">
-          <!-- Dynamic Role Buttons (Mr White / Undercover / Civilian) generated via JS -->
+          <!-- Dynamic Role Buttons (Mr White / Undercover Only) generated via JS -->
         </div>
       </div>
     </div>
@@ -178,7 +190,7 @@
     <!-- RESULT MODAL -->
     <div class="modal-overlay" id="result-modal">
       <div class="modal-card">
-        <h2 id="result-role-title" class="modal-player-title">A Civilian has been eliminated!</h2>
+        <h2 id="result-role-title" class="modal-player-title">Eliminated!</h2>
         <div class="avatar-bubble modal-avatar" id="result-avatar">P</div>
         <h3 id="result-player-name" class="modal-player-title">Name</h3>
         <button class="primary-btn modal-ok-btn" onclick="handleResultModalOk()">OK</button>

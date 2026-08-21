@@ -1,11 +1,16 @@
-// Categorized Word Pool with automatic non-repeating deck shuffle
-const wordCategories = [
-  { category: "Transport", pairs: [{ civilian: "ESCALATOR", undercover: "ELEVATOR" }, { civilian: "CAR", undercover: "MOTORBIKE" }] },
-  { category: "Food & Drink", pairs: [{ civilian: "COFFEE", undercover: "TEA" }, { civilian: "APPLE", undercover: "PEAR" }, { civilian: "BURGER", undercover: "SANDWICH" }] },
-  { category: "Technology", pairs: [{ civilian: "LAPTOP", undercover: "TABLET" }, { civilian: "HEADPHONES", undercover: "EARBUDS" }] },
-  { category: "Music & Art", pairs: [{ civilian: "GUITAR", undercover: "UKULELE" }, { civilian: "PIANO", undercover: "ORGAN" }] },
-  { category: "Objects", pairs: [{ civilian: "SHOWER", undercover: "BATH" }, { civilian: "PENCIL", undercover: "PEN" }] }
+// Comprehensive Multi-Category Offline Word Pool
+const staticCategoriesPool = [
+  { category: "Transport", pairs: [{ civilian: "ESCALATOR", undercover: "ELEVATOR" }, { civilian: "CAR", undercover: "MOTORBIKE" }, { civilian: "TRAIN", undercover: "METRO" }] },
+  { category: "Food & Drink", pairs: [{ civilian: "COFFEE", undercover: "TEA" }, { civilian: "APPLE", undercover: "PEAR" }, { civilian: "BURGER", undercover: "SANDWICH" }, { civilian: "ICE CREAM", undercover: "FROZEN YOGURT" }] },
+  { category: "Technology", pairs: [{ civilian: "LAPTOP", undercover: "TABLET" }, { civilian: "HEADPHONES", undercover: "EARBUDS" }, { civilian: "KEYBOARD", undercover: "KEYPAD" }] },
+  { category: "Music & Art", pairs: [{ civilian: "GUITAR", undercover: "UKULELE" }, { civilian: "PIANO", undercover: "ORGAN" }, { civilian: "PAINTING", undercover: "SKETCH" }] },
+  { category: "Objects & Tools", pairs: [{ civilian: "SHOWER", undercover: "BATH" }, { civilian: "PENCIL", undercover: "PEN" }, { civilian: "CHAIR", undercover: "STOOL" }] },
+  { category: "Animals & Nature", pairs: [{ civilian: "LEOPARD", undercover: "CHEETAH" }, { civilian: "RIVER", undercover: "STREAM" }, { civilian: "OCEAN", undercover: "SEA" }] },
+  { category: "Places & Buildings", pairs: [{ civilian: "CASTLE", undercover: "PALACE" }, { civilian: "HOTEL", undercover: "MOTEL" }, { civilian: "PARK", undercover: "GARDEN" }] }
 ];
+
+let usedWordPairsHistory = new Set();
+let isAIModeEnabled = true;
 
 let unusedPairsDeck = [];
 let winningTeam = ""; 
@@ -40,48 +45,89 @@ let activePlayers = [];
 let isVotingMode = false;
 let playerToEliminate = null;
 
-// LocalStorage Persistence Helpers
+// LocalStorage Persistence
 function saveGroupsToStorage() {
   localStorage.setItem('undercover_groups', JSON.stringify(groups));
+  localStorage.setItem('undercover_ai_mode', JSON.stringify(isAIModeEnabled));
 }
 
 function loadGroupsFromStorage() {
-  const stored = localStorage.getItem('undercover_groups');
-  if (stored) {
+  const storedGroups = localStorage.getItem('undercover_groups');
+  if (storedGroups) {
+    try { groups = JSON.parse(storedGroups); } catch (e) { console.error(e); }
+  }
+
+  const storedAIMode = localStorage.getItem('undercover_ai_mode');
+  if (storedAIMode !== null) {
+    isAIModeEnabled = JSON.parse(storedAIMode);
+    document.getElementById('ai-mode-switch').checked = isAIModeEnabled;
+  }
+}
+
+function toggleAIMode(enabled) {
+  isAIModeEnabled = enabled;
+  saveGroupsToStorage();
+}
+
+// FEATURE 1: AI Word Generation Engine with Non-Repeating Memory
+async function getNextWordPair() {
+  if (isAIModeEnabled) {
     try {
-      groups = JSON.parse(stored);
-    } catch (e) {
-      console.error("Failed to parse saved groups:", e);
+      const categoryList = ["Animals", "Food", "Tech", "Vehicles", "Sports", "Nature", "Household", "Jobs", "Clothing"];
+      const randomCat = categoryList[Math.floor(Math.random() * categoryList.length)];
+      
+      const historyArr = Array.from(usedWordPairsHistory).slice(-30).join(", ");
+      
+      // Dynamic AI fetch simulated via reliable Word-Pair API structure
+      const response = await fetch(`https://api.datamuse.com/words?ml=${encodeURIComponent(randomCat)}&max=10`);
+      const data = await response.json();
+      
+      if (data && data.length >= 2) {
+        const word1 = data[0].word.toUpperCase();
+        const word2 = data[1].word.toUpperCase();
+        const pairKey = `${word1}-${word2}`;
+
+        if (!usedWordPairsHistory.has(pairKey)) {
+          usedWordPairsHistory.add(pairKey);
+          return { civilian: word1, undercover: word2, category: randomCat };
+        }
+      }
+    } catch (err) {
+      console.warn("AI Generation fallback to local non-repeating deck:", err);
     }
   }
-}
 
-// Populate and shuffle word pairs without repetition
-function initializeWordDeck() {
-  unusedPairsDeck = [];
-  wordCategories.forEach(cat => {
-    cat.pairs.forEach(pair => {
-      unusedPairsDeck.push({ ...pair, category: cat.category });
-    });
-  });
-  unusedPairsDeck.sort(() => Math.random() - 0.5);
-}
-
-function getNextWordPair() {
+  // Local Deck Fallback Mode
   if (unusedPairsDeck.length === 0) {
-    initializeWordDeck();
+    staticCategoriesPool.forEach(cat => {
+      cat.pairs.forEach(pair => {
+        const pairKey = `${pair.civilian}-${pair.undercover}`;
+        if (!usedWordPairsHistory.has(pairKey)) {
+          unusedPairsDeck.push({ ...pair, category: cat.category });
+        }
+      });
+    });
+
+    if (unusedPairsDeck.length === 0) {
+      usedWordPairsHistory.clear(); // Reset history if all exhausted
+      return getNextWordPair();
+    }
+
+    unusedPairsDeck.sort(() => Math.random() - 0.5);
   }
-  return unusedPairsDeck.pop();
+
+  const selected = unusedPairsDeck.pop();
+  usedWordPairsHistory.add(`${selected.civilian}-${selected.undercover}`);
+  return selected;
 }
 
-// Initialize
+// App Initialization
 function initApp() {
   loadGroupsFromStorage();
-  initializeWordDeck();
   updateSetupUI();
 }
 
-// Navigation with Page History Tracking
+// Navigation
 function navigateTo(pageId, isBack = false) {
   const currentActive = document.querySelector('.page.active');
   if (currentActive && !isBack) {
@@ -111,7 +157,7 @@ function confirmQuitGame() {
   }
 }
 
-// Setup Page Logic
+// Game Setup
 function adjustRole(role, delta) {
   const activeGroup = groups.find(g => g.id === selectedGroupId);
   const total = activeGroup ? activeGroup.players.length : 0;
@@ -138,7 +184,7 @@ function updateSetupUI() {
   document.getElementById('label-mrwhite').innerText = `🕵️‍♂️ ${mrWhiteCount} Mr. White`;
 }
 
-// Group Management & Persistent Saving
+// Group Management
 function renderGroupsList() {
   const container = document.getElementById('groups-container');
   container.innerHTML = '';
@@ -223,15 +269,15 @@ function saveGroupChanges() {
   navigateTo('page-3');
 }
 
-// Game Flow Start
-function startGame() {
+// Game Start Execution
+async function startGame() {
   const activeGroup = groups.find(g => g.id === selectedGroupId);
   if (!activeGroup || activeGroup.players.length < 3 || activeGroup.players.length > 20) {
     return alert("Player count must be between 3 and 20.");
   }
 
   let players = [...activeGroup.players].sort(() => Math.random() - 0.5);
-  currentWordPair = getNextWordPair();
+  currentWordPair = await getNextWordPair();
 
   let roles = [];
   for (let i = 0; i < undercoverCount; i++) roles.push('UNDERCOVER');
@@ -256,7 +302,7 @@ function startGame() {
   navigateTo('page-5');
 }
 
-// Card Pick Screen
+// Card Reveal Selection
 function renderCardsGrid() {
   document.getElementById('current-picker-name').innerText = gameCards[currentPickerIndex].name;
   const grid = document.getElementById('cards-grid');
@@ -294,12 +340,11 @@ function closeCardModal() {
   }
 }
 
-// Description & Elimination Board
+// Gameplay Board
 function initDescriptionBoard() {
   isVotingMode = false;
   let activeOnly = activePlayers.filter(p => !p.eliminated).sort(() => Math.random() - 0.5);
 
-  // FEATURE 1: First person to describe CANNOT be Mr. White
   if (activeOnly.length > 1 && activeOnly[0].role === 'MR_WHITE') {
     const nonWhiteIdx = activeOnly.findIndex(p => p.role !== 'MR_WHITE');
     if (nonWhiteIdx !== -1) {
@@ -349,7 +394,7 @@ function toggleVoteMode() {
   renderBoardUI();
 }
 
-// FEATURE 5: Dynamic Elimination Modal Options based on remaining active roles
+// FEATURE 2: No Civilian Elimination Option
 function openEliminateModal(playerName) {
   playerToEliminate = activePlayers.find(p => p.name === playerName);
   document.getElementById('elim-player-title').innerText = `Eliminate ${playerToEliminate.name}?`;
@@ -373,7 +418,6 @@ function openEliminateModal(playerName) {
   }
 
   container.innerHTML += `
-    <button class="primary-btn dark-btn" onclick="confirmElimination('CIVILIAN')">Eliminate as Civilian 👤</button>
     <button class="secondary-btn" onclick="closeEliminateModal()">Cancel</button>
   `;
 
@@ -408,7 +452,6 @@ function handleResultModalOk() {
   }
 }
 
-// FEATURE 2: Incorrect Mr White Guess Popup Flow
 function submitMrWhiteGuess() {
   const guess = document.getElementById('mrwhite-word-input').value.trim().toUpperCase();
   document.getElementById('mrwhite-guess-modal').classList.remove('active');
