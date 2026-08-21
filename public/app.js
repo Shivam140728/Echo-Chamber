@@ -1,4 +1,4 @@
-// Exact Categories with 100 Major Word Pairs
+// Exact Categories from Image with 100 Major Word Pairs
 const staticCategoriesPool = [
   {
     category: "Animals",
@@ -96,8 +96,6 @@ let selectedCategories = ["All"];
 let usedWordPairsHistory = new Set();
 let isAIModeEnabled = true;
 
-let lastMrWhitePlayerNames = []; // Non-repeating Mr. White tracking state
-
 let unusedPairsDeck = [];
 let winningTeam = ""; 
 let pageHistory = [];
@@ -133,25 +131,13 @@ let playerToEliminate = null;
 
 function saveGroupsToStorage() {
   localStorage.setItem('undercover_groups', JSON.stringify(groups));
-  localStorage.setItem('undercover_selected_group', selectedGroupId);
   localStorage.setItem('undercover_ai_mode', JSON.stringify(isAIModeEnabled));
-  localStorage.setItem('undercover_last_mr_white', JSON.stringify(lastMrWhitePlayerNames));
 }
 
 function loadGroupsFromStorage() {
   const storedGroups = localStorage.getItem('undercover_groups');
   if (storedGroups) {
     try { groups = JSON.parse(storedGroups); } catch (e) { console.error(e); }
-  }
-
-  const storedSelectedGroup = localStorage.getItem('undercover_selected_group');
-  if (storedSelectedGroup && groups.some(g => g.id === storedSelectedGroup)) {
-    selectedGroupId = storedSelectedGroup;
-  }
-
-  const storedMrWhite = localStorage.getItem('undercover_last_mr_white');
-  if (storedMrWhite) {
-    try { lastMrWhitePlayerNames = JSON.parse(storedMrWhite); } catch (e) { console.error(e); }
   }
 
   const storedAIMode = localStorage.getItem('undercover_ai_mode');
@@ -166,6 +152,7 @@ function toggleAIMode(enabled) {
   saveGroupsToStorage();
 }
 
+// Category Selection Logic
 function toggleCategory(catName) {
   if (catName === 'All') {
     selectedCategories = ['All'];
@@ -199,6 +186,7 @@ function renderCategoriesUI() {
   });
 }
 
+// AI / Word Pair Engine
 async function getNextWordPair() {
   if (isAIModeEnabled) {
     try {
@@ -226,6 +214,7 @@ async function getNextWordPair() {
     }
   }
 
+  // Local Deck Fallback Mode
   if (unusedPairsDeck.length === 0) {
     staticCategoriesPool.forEach(cat => {
       if (selectedCategories.includes('All') || selectedCategories.includes(cat.category)) {
@@ -334,7 +323,6 @@ function renderGroupsList() {
 
 function selectGroup(groupId) {
   selectedGroupId = groupId;
-  saveGroupsToStorage();
   navigateTo('page-2');
 }
 
@@ -397,67 +385,29 @@ function saveGroupChanges() {
   navigateTo('page-3');
 }
 
-// NON-REPEATING MR. WHITE ROLE ASSIGNMENT ENGINE
 async function startGame() {
   const activeGroup = groups.find(g => g.id === selectedGroupId);
   if (!activeGroup || activeGroup.players.length < 3 || activeGroup.players.length > 20) {
     return alert("Player count must be between 3 and 20.");
   }
 
-  let playersPool = [...activeGroup.players].sort(() => Math.random() - 0.5);
+  let players = [...activeGroup.players].sort(() => Math.random() - 0.5);
   currentWordPair = await getNextWordPair();
 
-  // Pick candidates for Mr. White excluding previous match's Mr. White
-  let eligibleMrWhiteCandidates = playersPool.filter(p => !lastMrWhitePlayerNames.includes(p.name));
-  
-  // Fallback if all players in group were previous Mr. Whites
-  if (eligibleMrWhiteCandidates.length < mrWhiteCount) {
-    eligibleMrWhiteCandidates = playersPool;
-  }
+  let roles = [];
+  for (let i = 0; i < undercoverCount; i++) roles.push('UNDERCOVER');
+  for (let i = 0; i < mrWhiteCount; i++) roles.push('MR_WHITE');
+  while (roles.length < players.length) roles.push('CIVILIAN');
+  roles = roles.sort(() => Math.random() - 0.5);
 
-  // Shuffle candidate pool
-  eligibleMrWhiteCandidates.sort(() => Math.random() - 0.5);
-
-  let chosenMrWhites = [];
-  for (let i = 0; i < mrWhiteCount; i++) {
-    if (eligibleMrWhiteCandidates[i]) {
-      chosenMrWhites.push(eligibleMrWhiteCandidates[i].name);
-    }
-  }
-
-  // Save chosen Mr. White names for subsequent games
-  lastMrWhitePlayerNames = [...chosenMrWhites];
-  saveGroupsToStorage();
-
-  // Filter remaining candidate pool for Undercovers and Civilians
-  let remainingPlayers = playersPool.filter(p => !chosenMrWhites.includes(p.name));
-  remainingPlayers.sort(() => Math.random() - 0.5);
-
-  let chosenUndercovers = [];
-  for (let i = 0; i < undercoverCount; i++) {
-    if (remainingPlayers[i]) {
-      chosenUndercovers.push(remainingPlayers[i].name);
-    }
-  }
-
-  // Assign designated roles to player instances
-  activePlayers = playersPool.map((p, idx) => {
-    let assignedRole = 'CIVILIAN';
-    if (chosenMrWhites.includes(p.name)) {
-      assignedRole = 'MR_WHITE';
-    } else if (chosenUndercovers.includes(p.name)) {
-      assignedRole = 'UNDERCOVER';
-    }
-
-    return {
-      name: p.name,
-      color: p.color,
-      role: assignedRole,
-      word: assignedRole === 'CIVILIAN' ? currentWordPair.civilian : (assignedRole === 'UNDERCOVER' ? currentWordPair.undercover : 'You are Mr. White!'),
-      eliminated: false,
-      order: idx + 1
-    };
-  });
+  activePlayers = players.map((p, idx) => ({
+    name: p.name,
+    color: p.color,
+    role: roles[idx],
+    word: roles[idx] === 'CIVILIAN' ? currentWordPair.civilian : (roles[idx] === 'UNDERCOVER' ? currentWordPair.undercover : 'You are Mr. White!'),
+    eliminated: false,
+    order: idx + 1
+  }));
 
   gameCards = activePlayers.map(p => ({ ...p, used: false }));
   currentPickerIndex = 0;
@@ -631,16 +581,19 @@ function closeMrWhiteWrongModal() {
   checkWinConditions();
 }
 
+// AUTOMATIC CIVILIAN WIN CONDITION
 function checkWinConditions() {
   const remaining = activePlayers.filter(p => !p.eliminated);
   const remainingInfiltrators = remaining.filter(p => p.role === 'MR_WHITE' || p.role === 'UNDERCOVER');
 
+  // Win condition: All Mr. White and Undercovers are eliminated
   if (remainingInfiltrators.length === 0) {
     winningTeam = 'CIVILIANS';
     triggerGameOver("All Infiltrators (Undercovers & Mr. Whites) eliminated! Civilians win!");
     return;
   }
 
+  // Win condition: Infiltrators reach majority or equality
   if (remaining.length <= 2 && remainingInfiltrators.length > 0) {
     winningTeam = 'INFILTRATORS';
     triggerGameOver("Infiltrators achieved majority!");
