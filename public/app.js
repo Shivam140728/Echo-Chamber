@@ -1,283 +1,193 @@
-// Comprehensive Multi-Category Offline Word Pool
-const staticCategoriesPool = [
-  { category: "Transport", pairs: [{ civilian: "ESCALATOR", undercover: "ELEVATOR" }, { civilian: "CAR", undercover: "MOTORBIKE" }, { civilian: "TRAIN", undercover: "METRO" }] },
-  { category: "Food & Drink", pairs: [{ civilian: "COFFEE", undercover: "TEA" }, { civilian: "APPLE", undercover: "PEAR" }, { civilian: "BURGER", undercover: "SANDWICH" }, { civilian: "ICE CREAM", undercover: "FROZEN YOGURT" }] },
-  { category: "Technology", pairs: [{ civilian: "LAPTOP", undercover: "TABLET" }, { civilian: "HEADPHONES", undercover: "EARBUDS" }, { civilian: "KEYBOARD", undercover: "KEYPAD" }] },
-  { category: "Music & Art", pairs: [{ civilian: "GUITAR", undercover: "UKULELE" }, { civilian: "PIANO", undercover: "ORGAN" }, { civilian: "PAINTING", undercover: "SKETCH" }] },
-  { category: "Objects & Tools", pairs: [{ civilian: "SHOWER", undercover: "BATH" }, { civilian: "PENCIL", undercover: "PEN" }, { civilian: "CHAIR", undercover: "STOOL" }] },
-  { category: "Animals & Nature", pairs: [{ civilian: "LEOPARD", undercover: "CHEETAH" }, { civilian: "RIVER", undercover: "STREAM" }, { civilian: "OCEAN", undercover: "SEA" }] },
-  { category: "Places & Buildings", pairs: [{ civilian: "CASTLE", undercover: "PALACE" }, { civilian: "HOTEL", undercover: "MOTEL" }, { civilian: "PARK", undercover: "GARDEN" }] }
+// Exact 10 Categories with Word Pools
+const categoriesData = [
+  { id: "Animals", name: "Animals", count: 100, pairs: [{ civilian: "DOG", undercover: "WOLF" }, { civilian: "CAT", undercover: "LION" }, { civilian: "HORSE", undercover: "DONKEY" }, { civilian: "EAGLE", undercover: "HAWK" }] },
+  { id: "Entertainment", name: "Entertainment", count: 100, pairs: [{ civilian: "MOVIE", undercover: "SERIES" }, { civilian: "CONCERT", undercover: "FESTIVAL" }, { civilian: "ACTOR", undercover: "DIRECTOR" }] },
+  { id: "Everyday Life", name: "Everyday Life", count: 100, pairs: [{ civilian: "MORNING", undercover: "EVENING" }, { civilian: "SLEEP", undercover: "NAP" }, { civilian: "ALARM", undercover: "TIMER" }] },
+  { id: "Food & Drink", name: "Food & Drink", count: 100, pairs: [{ civilian: "COFFEE", undercover: "TEA" }, { civilian: "BURGER", undercover: "SANDWICH" }, { civilian: "PIZZA", undercover: "PASTA" }] },
+  { id: "Nature", name: "Nature", count: 100, pairs: [{ civilian: "RIVER", undercover: "STREAM" }, { civilian: "MOUNTAIN", undercover: "HILL" }, { civilian: "FOREST", undercover: "JUNGLE" }] },
+  { id: "Objects", name: "Objects", count: 100, pairs: [{ civilian: "CHAIR", undercover: "STOOL" }, { civilian: "PENCIL", undercover: "PEN" }, { civilian: "CLOCK", undercover: "WATCH" }] },
+  { id: "Places", name: "Places", count: 100, pairs: [{ civilian: "PARK", undercover: "GARDEN" }, { civilian: "HOTEL", undercover: "MOTEL" }, { civilian: "CASTLE", undercover: "PALACE" }] },
+  { id: "Professions", name: "Professions", count: 100, pairs: [{ civilian: "DOCTOR", undercover: "NURSE" }, { civilian: "PILOT", undercover: "CAPTAIN" }, { civilian: "CHEF", undercover: "COOK" }] },
+  { id: "Sports", name: "Sports", count: 100, pairs: [{ civilian: "FOOTBALL", undercover: "RUGBY" }, { civilian: "TENNIS", undercover: "BADMINTON" }, { civilian: "RUNNING", undercover: "JOGGING" }] },
+  { id: "Travel", name: "Travel", count: 100, pairs: [{ civilian: "PLANE", undercover: "HELICOPTER" }, { civilian: "PASSPORT", undercover: "VISA" }, { civilian: "SUITCASE", undercover: "BACKPACK" }] }
 ];
 
-let usedWordPairsHistory = new Set();
-let isAIModeEnabled = true;
+let selectedCategories = new Set(categoriesData.map(c => c.id));
+let isAllSelected = true;
 
-let unusedPairsDeck = [];
-let winningTeam = ""; 
-let pageHistory = [];
-
-let groups = [
-  {
-    id: 'g1',
-    name: 'V5',
-    color: '#f43f5e',
-    players: [
-      { name: 'Shivam', color: '#22c55e' },
-      { name: 'Sneha', color: '#38bdf8' },
-      { name: 'Mahima', color: '#4ade80' },
-      { name: 'Dhanush', color: '#0284c7' },
-      { name: 'Anand', color: '#22d3ee' }
-    ]
-  }
-];
-
-let selectedGroupId = 'g1';
-let editingGroup = null;
+let currentTeam = {
+  name: "Team 5",
+  players: [
+    { name: "SN", color: "#22c55e" },
+    { name: "AS", color: "#38bdf8" },
+    { name: "LA", color: "#4ade80" },
+    { name: "AA", color: "#0284c7" },
+    { name: "ME", color: "#22d3ee" },
+    { name: "AB", color: "#f43f5e" }
+  ]
+};
 
 let undercoverCount = 1;
 let mrWhiteCount = 1;
 
+let usedWordPairsHistory = new Set();
+let isAIModeEnabled = true;
+
 let currentWordPair = null;
 let gameCards = [];
 let currentPickerIndex = 0;
-
 let activePlayers = [];
 let isVotingMode = false;
 let playerToEliminate = null;
+let winningTeam = "";
+let pageHistory = [];
 
-// LocalStorage Persistence
-function saveGroupsToStorage() {
-  localStorage.setItem('undercover_groups', JSON.stringify(groups));
-  localStorage.setItem('undercover_ai_mode', JSON.stringify(isAIModeEnabled));
-}
-
-function loadGroupsFromStorage() {
-  const storedGroups = localStorage.getItem('undercover_groups');
-  if (storedGroups) {
-    try { groups = JSON.parse(storedGroups); } catch (e) { console.error(e); }
-  }
-
-  const storedAIMode = localStorage.getItem('undercover_ai_mode');
-  if (storedAIMode !== null) {
-    isAIModeEnabled = JSON.parse(storedAIMode);
-    document.getElementById('ai-mode-switch').checked = isAIModeEnabled;
-  }
-}
-
-function toggleAIMode(enabled) {
-  isAIModeEnabled = enabled;
-  saveGroupsToStorage();
-}
-
-// FEATURE 1: AI Word Generation Engine with Non-Repeating Memory
-async function getNextWordPair() {
-  if (isAIModeEnabled) {
-    try {
-      const categoryList = ["Animals", "Food", "Tech", "Vehicles", "Sports", "Nature", "Household", "Jobs", "Clothing"];
-      const randomCat = categoryList[Math.floor(Math.random() * categoryList.length)];
-      
-      const historyArr = Array.from(usedWordPairsHistory).slice(-30).join(", ");
-      
-      // Dynamic AI fetch simulated via reliable Word-Pair API structure
-      const response = await fetch(`https://api.datamuse.com/words?ml=${encodeURIComponent(randomCat)}&max=10`);
-      const data = await response.json();
-      
-      if (data && data.length >= 2) {
-        const word1 = data[0].word.toUpperCase();
-        const word2 = data[1].word.toUpperCase();
-        const pairKey = `${word1}-${word2}`;
-
-        if (!usedWordPairsHistory.has(pairKey)) {
-          usedWordPairsHistory.add(pairKey);
-          return { civilian: word1, undercover: word2, category: randomCat };
-        }
-      }
-    } catch (err) {
-      console.warn("AI Generation fallback to local non-repeating deck:", err);
-    }
-  }
-
-  // Local Deck Fallback Mode
-  if (unusedPairsDeck.length === 0) {
-    staticCategoriesPool.forEach(cat => {
-      cat.pairs.forEach(pair => {
-        const pairKey = `${pair.civilian}-${pair.undercover}`;
-        if (!usedWordPairsHistory.has(pairKey)) {
-          unusedPairsDeck.push({ ...pair, category: cat.category });
-        }
-      });
-    });
-
-    if (unusedPairsDeck.length === 0) {
-      usedWordPairsHistory.clear(); // Reset history if all exhausted
-      return getNextWordPair();
-    }
-
-    unusedPairsDeck.sort(() => Math.random() - 0.5);
-  }
-
-  const selected = unusedPairsDeck.pop();
-  usedWordPairsHistory.add(`${selected.civilian}-${selected.undercover}`);
-  return selected;
-}
-
-// App Initialization
 function initApp() {
-  loadGroupsFromStorage();
+  renderSuspectsList();
+  renderCategoriesGrid();
   updateSetupUI();
 }
 
-// Navigation
-function navigateTo(pageId, isBack = false) {
-  const currentActive = document.querySelector('.page.active');
-  if (currentActive && !isBack) {
-    pageHistory.push(currentActive.id);
-  }
-
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById(pageId).classList.add('active');
-
-  if (pageId === 'page-2') updateSetupUI();
-  if (pageId === 'page-3') renderGroupsList();
+function updateTeamName(val) {
+  currentTeam.name = val.trim() || "Team";
 }
 
-function goBack() {
-  if (pageHistory.length > 0) {
-    const previousPage = pageHistory.pop();
-    navigateTo(previousPage, true);
+function renderSuspectsList() {
+  const container = document.getElementById('suspects-list-container');
+  container.innerHTML = '';
+
+  currentTeam.players.forEach((p, idx) => {
+    container.innerHTML += `
+      <div class="suspect-item">
+        <div class="suspect-left">
+          <span class="suspect-num">0${idx + 1}</span>
+          <span class="suspect-name">${p.name}</span>
+        </div>
+        <button class="remove-btn" onclick="removePlayer(${idx})">✕</button>
+      </div>
+    `;
+  });
+
+  document.getElementById('badge-player-count').innerText = currentTeam.players.length;
+}
+
+function addPlayerToCurrentGroup() {
+  if (currentTeam.players.length >= 20) return alert("Maximum 20 players.");
+  const name = prompt("Enter player initials/name:");
+  if (name && name.trim()) {
+    const colors = ['#22c55e', '#38bdf8', '#4ade80', '#0284c7', '#22d3ee', '#f43f5e'];
+    currentTeam.players.push({ name: name.trim().toUpperCase(), color: colors[Math.floor(Math.random() * colors.length)] });
+    renderSuspectsList();
+    updateSetupUI();
+  }
+}
+
+function removePlayer(idx) {
+  if (currentTeam.players.length <= 3) return alert("Minimum 3 players required.");
+  currentTeam.players.splice(idx, 1);
+  renderSuspectsList();
+  updateSetupUI();
+}
+
+// Categories handling
+function renderCategoriesGrid() {
+  const grid = document.getElementById('categories-grid');
+  grid.innerHTML = '';
+
+  categoriesData.forEach(cat => {
+    const isSelected = selectedCategories.has(cat.id);
+    grid.innerHTML += `
+      <div class="category-card ${isSelected ? 'selected' : ''}" onclick="toggleCategory('${cat.id}')">
+        <span class="cat-name">${cat.name}</span>
+        <span class="cat-count">${cat.count}</span>
+      </div>
+    `;
+  });
+
+  const allBtn = document.getElementById('cat-btn-all');
+  if (isAllSelected) {
+    allBtn.classList.add('selected');
   } else {
-    navigateTo('page-1', true);
+    allBtn.classList.remove('selected');
   }
 }
 
-function confirmQuitGame() {
-  if (confirm("Are you sure you want to quit the current game?")) {
-    pageHistory = [];
-    navigateTo('page-2');
+function toggleAllCategories() {
+  if (isAllSelected) {
+    selectedCategories.clear();
+    isAllSelected = false;
+  } else {
+    categoriesData.forEach(c => selectedCategories.add(c.id));
+    isAllSelected = true;
   }
+  renderCategoriesGrid();
 }
 
-// Game Setup
+function toggleCategory(catId) {
+  if (selectedCategories.has(catId)) {
+    selectedCategories.delete(catId);
+    isAllSelected = false;
+  } else {
+    selectedCategories.add(catId);
+    if (selectedCategories.size === categoriesData.length) {
+      isAllSelected = true;
+    }
+  }
+  renderCategoriesGrid();
+}
+
 function adjustRole(role, delta) {
-  const activeGroup = groups.find(g => g.id === selectedGroupId);
-  const total = activeGroup ? activeGroup.players.length : 0;
-
+  const total = currentTeam.players.length;
   if (role === 'undercover') undercoverCount = Math.max(0, undercoverCount + delta);
   if (role === 'mrWhite') mrWhiteCount = Math.max(0, mrWhiteCount + delta);
 
-  if ((undercoverCount + mrWhiteCount) >= total) {
-    if (role === 'undercover') undercoverCount = Math.max(0, total - mrWhiteCount - 1);
-    if (role === 'mrWhite') mrWhiteCount = Math.max(0, total - undercoverCount - 1);
+  if ((undercoverCount + mrWhiteCount) >= total - 1) {
+    if (role === 'undercover') undercoverCount = Math.max(0, total - mrWhiteCount - 2);
+    if (role === 'mrWhite') mrWhiteCount = Math.max(0, total - undercoverCount - 2);
   }
 
   updateSetupUI();
 }
 
 function updateSetupUI() {
-  const activeGroup = groups.find(g => g.id === selectedGroupId);
-  const total = activeGroup ? activeGroup.players.length : 0;
-  const civilians = Math.max(0, total - undercoverCount - mrWhiteCount);
-
-  document.getElementById('setup-player-count').innerText = `Players: ${total}`;
-  document.getElementById('label-civilians').innerText = `👤 ${civilians} Civilians`;
-  document.getElementById('label-undercover').innerText = `🕵️ ${undercoverCount} Undercover`;
-  document.getElementById('label-mrwhite').innerText = `🕵️‍♂️ ${mrWhiteCount} Mr. White`;
+  document.getElementById('cnt-undercover').innerText = undercoverCount;
+  document.getElementById('cnt-mrwhite').innerText = mrWhiteCount;
+  document.getElementById('footer-summary-text').innerText = 
+    `${currentTeam.players.length} players · ${undercoverCount} Spy · ${mrWhiteCount} Mr White`;
 }
 
-// Group Management
-function renderGroupsList() {
-  const container = document.getElementById('groups-container');
-  container.innerHTML = '';
+function toggleAIMode(enabled) {
+  isAIModeEnabled = enabled;
+}
 
-  groups.forEach(group => {
-    const isSelected = group.id === selectedGroupId;
-    container.innerHTML += `
-      <div class="group-card" style="background: white; border-radius:16px; padding:12px; margin-bottom:12px; box-shadow:0 2px 4px rgba(0,0,0,0.05);">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <h3 style="color:${group.color}">${group.name} (${group.players.length} Players)</h3>
-          <button class="icon-btn" onclick="openEditGroup('${group.id}')">✏️</button>
-        </div>
-        <button class="primary-btn" style="margin-top:8px; padding:8px; font-size:12px;" onclick="selectGroup('${group.id}')">
-          ${isSelected ? 'Selected' : 'Select'}
-        </button>
-      </div>
-    `;
+// Word Picker
+function getNextWordPair() {
+  let activePool = categoriesData.filter(c => selectedCategories.has(c.id));
+  if (activePool.length === 0) activePool = categoriesData;
+
+  let allPairs = [];
+  activePool.forEach(c => {
+    c.pairs.forEach(p => allPairs.push(p));
   });
-}
 
-function selectGroup(groupId) {
-  selectedGroupId = groupId;
-  navigateTo('page-2');
-}
-
-function openCreateGroup() {
-  editingGroup = { id: 'g_' + Date.now(), name: 'New Group', color: '#38bdf8', players: [] };
-  renderEditGroup();
-  navigateTo('page-4');
-}
-
-function openEditGroup(groupId) {
-  const target = groups.find(g => g.id === groupId);
-  editingGroup = JSON.parse(JSON.stringify(target));
-  renderEditGroup();
-  navigateTo('page-4');
-}
-
-function renderEditGroup() {
-  document.getElementById('edit-group-name').value = editingGroup.name;
-  const list = document.getElementById('edit-players-list');
-  list.innerHTML = '';
-
-  editingGroup.players.forEach((p, idx) => {
-    list.innerHTML += `
-      <div class="counter-row" style="background:white; padding:8px 12px; border-radius:12px; margin-bottom:6px;">
-        <span style="font-weight:700;">${p.name}</span>
-        <button class="icon-btn" onclick="removePlayerFromGroup(${idx})">🗑️</button>
-      </div>
-    `;
-  });
-}
-
-function addPlayerToGroup() {
-  if (editingGroup.players.length >= 20) return alert("Maximum 20 players allowed.");
-  const name = prompt("Enter player name:");
-  if (name && name.trim()) {
-    const colors = ['#22c55e', '#38bdf8', '#4ade80', '#0284c7', '#22d3ee', '#f43f5e'];
-    editingGroup.players.push({ name: name.trim(), color: colors[Math.floor(Math.random() * colors.length)] });
-    renderEditGroup();
-  }
-}
-
-function removePlayerFromGroup(index) {
-  editingGroup.players.splice(index, 1);
-  renderEditGroup();
-}
-
-function saveGroupChanges() {
-  if (editingGroup.players.length < 3) return alert("Group must have at least 3 players.");
-  editingGroup.name = document.getElementById('edit-group-name').value.trim() || 'Group';
-  
-  const index = groups.findIndex(g => g.id === editingGroup.id);
-  if (index >= 0) {
-    groups[index] = editingGroup;
-  } else {
-    groups.push(editingGroup);
+  let availablePairs = allPairs.filter(p => !usedWordPairsHistory.has(`${p.civilian}-${p.undercover}`));
+  if (availablePairs.length === 0) {
+    usedWordPairsHistory.clear();
+    availablePairs = allPairs;
   }
 
-  selectedGroupId = editingGroup.id;
-  saveGroupsToStorage();
-  navigateTo('page-3');
+  const selected = availablePairs[Math.floor(Math.random() * availablePairs.length)];
+  usedWordPairsHistory.add(`${selected.civilian}-${selected.undercover}`);
+  return selected;
 }
 
-// Game Start Execution
-async function startGame() {
-  const activeGroup = groups.find(g => g.id === selectedGroupId);
-  if (!activeGroup || activeGroup.players.length < 3 || activeGroup.players.length > 20) {
-    return alert("Player count must be between 3 and 20.");
-  }
+// Game Flow
+function startGame() {
+  if (selectedCategories.size === 0) return alert("Please select at least one category.");
+  if (currentTeam.players.length < 3) return alert("Minimum 3 players required.");
 
-  let players = [...activeGroup.players].sort(() => Math.random() - 0.5);
-  currentWordPair = await getNextWordPair();
+  let players = [...currentTeam.players].sort(() => Math.random() - 0.5);
+  currentWordPair = getNextWordPair();
 
   let roles = [];
   for (let i = 0; i < undercoverCount; i++) roles.push('UNDERCOVER');
@@ -302,16 +212,13 @@ async function startGame() {
   navigateTo('page-5');
 }
 
-// Card Reveal Selection
 function renderCardsGrid() {
   document.getElementById('current-picker-name').innerText = gameCards[currentPickerIndex].name;
   const grid = document.getElementById('cards-grid');
   grid.innerHTML = '';
 
   gameCards.forEach((card, idx) => {
-    grid.innerHTML += `
-      <div class="mystery-card ${card.used ? 'used' : ''}" onclick="pickCard(${idx})">❓</div>
-    `;
+    grid.innerHTML += `<div class="mystery-card ${card.used ? 'used' : ''}" onclick="pickCard(${idx})">❓</div>`;
   });
 }
 
@@ -340,37 +247,23 @@ function closeCardModal() {
   }
 }
 
-// Gameplay Board
 function initDescriptionBoard() {
   isVotingMode = false;
   let activeOnly = activePlayers.filter(p => !p.eliminated).sort(() => Math.random() - 0.5);
-
-  if (activeOnly.length > 1 && activeOnly[0].role === 'MR_WHITE') {
-    const nonWhiteIdx = activeOnly.findIndex(p => p.role !== 'MR_WHITE');
-    if (nonWhiteIdx !== -1) {
-      const temp = activeOnly[0];
-      activeOnly[0] = activeOnly[nonWhiteIdx];
-      activeOnly[nonWhiteIdx] = temp;
-    }
-  }
-
   activeOnly.forEach((p, idx) => p.order = idx + 1);
   renderBoardUI();
 }
 
 function renderBoardUI() {
   document.getElementById('board-title').innerText = isVotingMode ? "Elimination Time" : "Description Time";
-  document.getElementById('board-subtitle').innerText = isVotingMode 
-    ? "Discuss and vote somebody out by pointing fingers!" 
-    : "Describe your secret word in order.";
-
+  document.getElementById('board-subtitle').innerText = isVotingMode ? "Discuss and vote somebody out!" : "Describe your secret word in order.";
   document.getElementById('vote-action-btn').innerText = isVotingMode ? "Describe again" : "Go to Vote";
 
   const remainingWhite = activePlayers.filter(p => !p.eliminated && p.role === 'MR_WHITE').length;
   const remainingUndercover = activePlayers.filter(p => !p.eliminated && p.role === 'UNDERCOVER').length;
 
-  document.getElementById('count-mrwhite').innerText = remainingWhite;
-  document.getElementById('count-undercover').innerText = remainingUndercover;
+  document.getElementById('board-count-mrwhite').innerText = remainingWhite;
+  document.getElementById('board-count-undercover').innerText = remainingUndercover;
 
   const grid = document.getElementById('players-board-grid');
   grid.innerHTML = '';
@@ -378,10 +271,7 @@ function renderBoardUI() {
   activePlayers.filter(p => !p.eliminated).forEach(p => {
     grid.innerHTML += `
       <div class="player-card-node">
-        ${isVotingMode 
-          ? `<div class="badge-elim" onclick="openEliminateModal('${p.name}')">Eliminate</div>` 
-          : `<div class="badge-order">${p.order}</div>`
-        }
+        ${isVotingMode ? `<div class="badge-elim" onclick="openEliminateModal('${p.name}')">Eliminate</div>` : `<div class="badge-order">${p.order}</div>`}
         <div class="avatar-large" style="background:${p.color}">${p.name[0]}</div>
         <span class="player-node-name">${p.name}</span>
       </div>
@@ -394,7 +284,6 @@ function toggleVoteMode() {
   renderBoardUI();
 }
 
-// FEATURE 2: No Civilian Elimination Option
 function openEliminateModal(playerName) {
   playerToEliminate = activePlayers.find(p => p.name === playerName);
   document.getElementById('elim-player-title').innerText = `Eliminate ${playerToEliminate.name}?`;
@@ -406,21 +295,13 @@ function openEliminateModal(playerName) {
   container.innerHTML = '';
 
   if (remainingWhite > 0) {
-    container.innerHTML += `
-      <button class="primary-btn dark-btn" onclick="confirmElimination('MR_WHITE')">Eliminate as Mr. White 🕵️‍♂️</button>
-    `;
+    container.innerHTML += `<button class="primary-btn dark-btn" onclick="confirmElimination('MR_WHITE')">Eliminate as Mr. White 🕵️‍♂️</button>`;
   }
-
   if (remainingUndercover > 0) {
-    container.innerHTML += `
-      <button class="primary-btn dark-btn" onclick="confirmElimination('UNDERCOVER')">Eliminate as Undercover 🕵️</button>
-    `;
+    container.innerHTML += `<button class="primary-btn dark-btn" onclick="confirmElimination('UNDERCOVER')">Eliminate as Undercover 🕵️</button>`;
   }
 
-  container.innerHTML += `
-    <button class="secondary-btn" onclick="closeEliminateModal()">Cancel</button>
-  `;
-
+  container.innerHTML += `<button class="secondary-btn" onclick="closeEliminateModal()">Cancel</button>`;
   document.getElementById('eliminate-confirm-modal').classList.add('active');
 }
 
@@ -469,13 +350,15 @@ function closeMrWhiteWrongModal() {
   checkWinConditions();
 }
 
+// Win Conditions
 function checkWinConditions() {
   const remaining = activePlayers.filter(p => !p.eliminated);
   const remainingInfiltrators = remaining.filter(p => p.role === 'MR_WHITE' || p.role === 'UNDERCOVER');
 
+  // FEATURE 2: Once all Mr White & Undercover are eliminated, Civilians win
   if (remainingInfiltrators.length === 0) {
     winningTeam = 'CIVILIANS';
-    triggerGameOver("All Infiltrators eliminated!");
+    triggerGameOver("All Mr. Whites and Undercovers eliminated! Civilians win!");
     return;
   }
 
@@ -527,6 +410,29 @@ function goToSummaryPage() {
   });
 
   navigateTo('page-7');
+}
+
+function navigateTo(pageId, isBack = false) {
+  const currentActive = document.querySelector('.page.active');
+  if (currentActive && !isBack) pageHistory.push(currentActive.id);
+
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(pageId).classList.add('active');
+}
+
+function goBack() {
+  if (pageHistory.length > 0) {
+    navigateTo(pageHistory.pop(), true);
+  } else {
+    navigateTo('page-1', true);
+  }
+}
+
+function confirmQuitGame() {
+  if (confirm("Are you sure you want to quit the current game?")) {
+    pageHistory = [];
+    navigateTo('page-2');
+  }
 }
 
 document.addEventListener('DOMContentLoaded', initApp);
