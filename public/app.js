@@ -88,6 +88,7 @@ let currentPickerIndex = 0;
 let activePlayers = [];
 let isVotingMode = false;
 let playerToEliminate = null;
+let suspectedRole = null;
 let winningTeam = "";
 
 function initApp() {
@@ -125,7 +126,6 @@ function openGameSetup() {
   navigateTo('page-2');
 }
 
-// Renders saved groups below hero banner with Delete option
 function renderReadyTeams() {
   const container = document.getElementById('ready-teams-list');
   container.innerHTML = '';
@@ -151,7 +151,6 @@ function renderReadyTeams() {
   });
 }
 
-// Delete crew feature implementation
 function deleteCrew(event, groupId) {
   event.stopPropagation();
   const team = groups.find(g => g.id === groupId);
@@ -384,9 +383,16 @@ function renderBoardUI() {
   document.getElementById('board-title').innerText = isVotingMode ? "Elimination Time" : "Description Time";
   document.getElementById('board-subtitle').innerText = isVotingMode ? "Discuss and vote somebody out!" : "Describe your secret word in order.";
 
+  const remaining = activePlayers.filter(p => !p.eliminated);
+  const mwLeft = remaining.filter(p => p.role === 'MR_WHITE').length;
+  const spyLeft = remaining.filter(p => p.role === 'UNDERCOVER').length;
+
+  document.getElementById('count-mrwhite').innerText = `${mwLeft} Mr White`;
+  document.getElementById('count-undercover').innerText = `${spyLeft} Spy`;
+
   const grid = document.getElementById('players-board-grid');
   grid.innerHTML = '';
-  activePlayers.filter(p => !p.eliminated).forEach(p => {
+  remaining.forEach(p => {
     grid.innerHTML += `
       <div class="player-card-node">
         <div class="avatar-large">${p.name.substring(0, 2)}</div>
@@ -405,16 +411,54 @@ function toggleVoteMode() {
 function openEliminateModal(name) {
   playerToEliminate = activePlayers.find(p => p.name === name);
   document.getElementById('elim-player-title').innerText = `Eliminate ${playerToEliminate.name}?`;
+  
+  const remaining = activePlayers.filter(p => !p.eliminated);
+  const hasMrWhite = remaining.some(p => p.role === 'MR_WHITE');
+  const hasUndercover = remaining.some(p => p.role === 'UNDERCOVER');
+
   const container = document.getElementById('elimination-options-container');
-  container.innerHTML = `
-    <button class="dark-primary-btn" onclick="confirmElimination('MR_WHITE')">Eliminate as Mr. White 🕵️‍♂️</button>
-    <button class="dark-primary-btn" onclick="confirmElimination('UNDERCOVER')">Eliminate as Spy 🕵️</button>
-  `;
+  container.innerHTML = '';
+
+  // Requirement 6: Hide role options if no player with that role remains active
+  if (hasMrWhite) {
+    container.innerHTML += `<button class="dark-primary-btn" onclick="confirmElimination('MR_WHITE')">Eliminate as Mr. White 🕵️‍♂️</button>`;
+  }
+  if (hasUndercover) {
+    container.innerHTML += `<button class="dark-primary-btn" onclick="confirmElimination('UNDERCOVER')">Eliminate as Spy 🕵️</button>`;
+  }
+
   document.getElementById('eliminate-confirm-modal').classList.add('active');
 }
 
 function confirmElimination(role) {
+  suspectedRole = role;
   document.getElementById('eliminate-confirm-modal').classList.remove('active');
+
+  // Requirement 1: Guess mechanic when voting/eliminating for Mr. White
+  if (suspectedRole === 'MR_WHITE') {
+    document.getElementById('mrwhite-word-input').value = '';
+    document.getElementById('mrwhite-guess-modal').classList.add('active');
+  } else {
+    processEliminationResult();
+  }
+}
+
+function submitMrWhiteGuess() {
+  const guess = document.getElementById('mrwhite-word-input').value.trim().toUpperCase();
+  document.getElementById('mrwhite-guess-modal').classList.remove('active');
+
+  // Requirement 1: If Mr. White guesses correct word -> Instant Win
+  if (guess === currentWordPair.civilian.toUpperCase()) {
+    winningTeam = 'MR_WHITE';
+    triggerGameOver("Mr. White guessed the secret word correctly and won the game!");
+  } else {
+    // Requirement 1: Wrong word -> Mr. White is eliminated & game continues
+    alert("Wrong guess! Player is eliminated.");
+    processEliminationResult();
+  }
+}
+
+function processEliminationResult() {
   playerToEliminate.eliminated = true;
 
   document.getElementById('result-role-title').innerText = `${playerToEliminate.role} ELIMINATED!`;
@@ -425,49 +469,82 @@ function confirmElimination(role) {
 
 function handleResultModalOk() {
   document.getElementById('result-modal').classList.remove('active');
-  if (playerToEliminate.role === 'MR_WHITE') {
-    document.getElementById('mrwhite-guess-modal').classList.add('active');
-  } else {
-    checkWinConditions();
-  }
-}
-
-function submitMrWhiteGuess() {
-  const guess = document.getElementById('mrwhite-word-input').value.trim().toUpperCase();
-  document.getElementById('mrwhite-guess-modal').classList.remove('active');
-
-  if (guess === currentWordPair.civilian.toUpperCase()) {
-    winningTeam = 'INFILTRATORS';
-    triggerGameOver("Mr. White guessed correctly!");
-  } else {
-    checkWinConditions();
-  }
+  checkWinConditions();
 }
 
 function checkWinConditions() {
   const remaining = activePlayers.filter(p => !p.eliminated);
-  const remainingInfiltrators = remaining.filter(p => p.role === 'MR_WHITE' || p.role === 'UNDERCOVER');
+  const remainingMrWhite = remaining.filter(p => p.role === 'MR_WHITE');
+  const remainingUndercover = remaining.filter(p => p.role === 'UNDERCOVER');
+  const remainingCivilians = remaining.filter(p => p.role === 'CIVILIAN');
 
-  if (remainingInfiltrators.length === 0) {
+  // Requirement 4: Once Civilians find and eliminate all Mr. Whites and Undercovers -> Civilians Win
+  if (remainingMrWhite.length === 0 && remainingUndercover.length === 0) {
     winningTeam = 'CIVILIANS';
-    triggerGameOver("Civilians Win! All infiltrators eliminated.");
-  } else if (remaining.length <= 1) {
-    winningTeam = 'INFILTRATORS';
-    triggerGameOver("Infiltrators achieved majority!");
-  } else {
-    initDescriptionBoard();
+    triggerGameOver("Civilians Win! All Mr. Whites and Undercovers have been eliminated.");
+    return;
   }
+
+  // Requirement 5: Exactly 2 players remaining scenario evaluations
+  if (remaining.length === 2) {
+    const p1 = remaining[0];
+    const p2 = remaining[1];
+
+    // (A) 1 Mr. White & 1 Civilian -> Mr. White Wins
+    if ((p1.role === 'MR_WHITE' && p2.role === 'CIVILIAN') || (p2.role === 'MR_WHITE' && p1.role === 'CIVILIAN')) {
+      winningTeam = 'MR_WHITE';
+      triggerGameOver("Mr. White Wins! 1 Mr. White and 1 Civilian remaining.");
+      return;
+    }
+
+    // (B) 1 Mr. White & 1 Undercover -> Both Win
+    if ((p1.role === 'MR_WHITE' && p2.role === 'UNDERCOVER') || (p2.role === 'MR_WHITE' && p1.role === 'UNDERCOVER')) {
+      winningTeam = 'MR_WHITE_AND_UNDERCOVER';
+      triggerGameOver("Mr. White & Undercover Win! 1 Mr. White and 1 Undercover remaining.");
+      return;
+    }
+
+    // (C) 1 Undercover & 1 Civilian -> Undercover Wins
+    if ((p1.role === 'UNDERCOVER' && p2.role === 'CIVILIAN') || (p2.role === 'UNDERCOVER' && p1.role === 'CIVILIAN')) {
+      winningTeam = 'UNDERCOVER';
+      triggerGameOver("Undercover Wins! 1 Undercover and 1 Civilian remaining.");
+      return;
+    }
+
+    // (D) 2 Civilians -> Civilians Win
+    if (p1.role === 'CIVILIAN' && p2.role === 'CIVILIAN') {
+      winningTeam = 'CIVILIANS';
+      triggerGameOver("Civilians Win! Only Civilians are left.");
+      return;
+    }
+  }
+
+  // Continue current game session
+  initDescriptionBoard();
 }
 
 function triggerGameOver(msg) {
-  document.getElementById('game-over-title').innerText = winningTeam === 'CIVILIANS' ? "Civilians Win! 🎉" : "Infiltrators Win! 🏆";
+  let title = "Game Over";
+  if (winningTeam === 'CIVILIANS') title = "Civilians Win! 🎉";
+  else if (winningTeam === 'MR_WHITE') title = "Mr. White Wins! 🕵️‍♂️";
+  else if (winningTeam === 'UNDERCOVER') title = "Undercover Wins! 🕵️";
+  else if (winningTeam === 'MR_WHITE_AND_UNDERCOVER') title = "Mr. White & Undercover Win! 🏆";
+
+  document.getElementById('game-over-title').innerText = title;
   document.getElementById('game-over-msg').innerText = msg;
   document.getElementById('game-over-modal').classList.add('active');
 }
 
 function goToSummaryPage() {
   document.getElementById('game-over-modal').classList.remove('active');
-  document.getElementById('summary-title').innerText = winningTeam === 'CIVILIANS' ? "Civilians Win! 🎉" : "Infiltrators Win! 🏆";
+  
+  let title = "Game Results";
+  if (winningTeam === 'CIVILIANS') title = "Civilians Win! 🎉";
+  else if (winningTeam === 'MR_WHITE') title = "Mr. White Wins! 🕵️‍♂️";
+  else if (winningTeam === 'UNDERCOVER') title = "Undercover Wins! 🕵️";
+  else if (winningTeam === 'MR_WHITE_AND_UNDERCOVER') title = "Mr. White & Undercover Win! 🏆";
+
+  document.getElementById('summary-title').innerText = title;
   document.getElementById('sum-civilian-word').innerText = currentWordPair.civilian;
   document.getElementById('sum-undercover-word').innerText = currentWordPair.undercover;
 
