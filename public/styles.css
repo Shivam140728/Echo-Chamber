@@ -33,7 +33,7 @@ body {
   display: none;
   flex-direction: column;
   height: 100%;
-  padding: 20px 18px 80px 18px;
+  padding: 20px 18px 24px 18px; /* Balanced bottom padding */
   overflow-y: auto;
 }
 
@@ -112,6 +112,9 @@ body {
   background: white;
   font-size: 20px;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* HERO CARD */
@@ -157,6 +160,11 @@ body {
   font-size: 14px;
   cursor: pointer;
   margin-bottom: 20px;
+  transition: background 0.2s;
+}
+
+.hero-btn:hover {
+  background: #eae6dd;
 }
 
 .hero-stats {
@@ -170,7 +178,7 @@ body {
 .hero-stats span { font-size: 9px; color: #888; }
 
 /* SECTIONS */
-.section-header { margin-bottom: 10px; }
+.section-header { margin-bottom: 12px; }
 
 .badge-count {
   width: 22px;
@@ -191,8 +199,8 @@ body {
   flex-direction: column;
   gap: 10px;
   overflow-y: auto;
-  max-height: 320px;
-  padding-bottom: 6px;
+  max-height: 380px; /* Extended vertical height since bottom nav is removed */
+  padding-right: 2px;
 }
 
 .ready-team-item {
@@ -248,33 +256,6 @@ body {
   background: #dc3545;
   color: white;
 }
-
-/* BOTTOM NAV */
-.bottom-nav {
-  position: absolute;
-  bottom: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: calc(100% - 36px);
-  background: #191817;
-  border-radius: 20px;
-  padding: 6px;
-  display: flex;
-  justify-content: space-around;
-}
-
-.nav-tab {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border-radius: 14px;
-  color: #888;
-  font-size: 9px;
-  font-weight: 800;
-}
-
-.nav-tab.active { background: #f5f3ec; color: #111; }
 
 /* FORM SECTIONS (SET THE SCENE) */
 .form-section { margin-bottom: 24px; }
@@ -449,6 +430,7 @@ body {
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
 .foot-summary-text { font-size: 10px; color: #888; text-align: center; margin-top: 8px; }
@@ -473,6 +455,79 @@ input:checked + .slider:before { transform: translateX(18px); }
 .player-card-node { display: flex; flex-direction: column; align-items: center; }
 .avatar-large { width: 50px; height: 50px; border-radius: 50%; background: #191817; color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 18px; margin-bottom: 4px; }
 
+/* PAGE 7: RESULTS LAYOUT SPACING & ALIGNMENT */
+.results-header-block {
+  margin-top: 10px;
+  margin-bottom: 20px;
+}
+
+.summary-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 32px;
+  line-height: 1.1;
+  color: #111;
+  margin-bottom: 12px;
+}
+
+.words-summary-box {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.word-row {
+  font-size: 13px;
+  color: #555;
+}
+
+.word-row strong {
+  color: #111;
+  font-weight: 800;
+}
+
+.summary-players-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 480px;
+  overflow-y: auto;
+  margin-bottom: 16px;
+}
+
+.summary-player-card {
+  background: white;
+  border: 1px solid #e2ded4;
+  padding: 14px 16px;
+  border-radius: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.summary-player-card .p-info {
+  font-size: 13px;
+  font-weight: 700;
+  color: #111;
+}
+
+.summary-player-card .p-role {
+  font-size: 11px;
+  font-weight: 600;
+  color: #888;
+  margin-left: 4px;
+}
+
+.summary-player-card .p-word {
+  font-size: 13px;
+  font-weight: 800;
+  color: #111;
+}
+
+.margin-top-auto {
+  margin-top: auto;
+}
+
+/* MODALS */
 .modal-overlay { position: absolute; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; padding: 20px; z-index: 100; }
 .modal-overlay.active { display: flex; }
 .modal-card { background: white; border-radius: 24px; width: 100%; padding: 20px; text-align: center; display: flex; flex-direction: column; gap: 12px; align-items: center; }

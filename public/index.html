@@ -10,12 +10,14 @@
 
   <div class="app-container">
 
+    <!-- PAGE 1: HOME DASHBOARD -->
     <div id="page-1" class="page active">
       <div class="top-nav-bar">
         <div class="app-brand"><span class="brand-badge">W</span> MR. WHITE</div>
         <div class="fresh-pill">965 FRESH</div>
       </div>
 
+      <!-- HERO BANNER (START A NEW GAME) -->
       <div class="hero-card">
         <div class="hero-tag">PASS THE PHONE · TRUST NO ONE</div>
         <h1 class="hero-title">Same room.<br><span class="highlight-text">Different truths.</span></h1>
@@ -28,30 +30,19 @@
         </div>
       </div>
 
+      <!-- YOUR CREWS / READY TEAMS BELOW HERO BANNER -->
       <div class="section-header">
         <span class="sub-label">YOUR CREWS</span>
         <h2 class="serif-head">Ready teams</h2>
       </div>
 
+      <!-- SAVED GROUPS LIST WITH DELETE OPTION -->
       <div class="ready-teams-scroll" id="ready-teams-list">
-        </div>
-
-      <div class="bottom-nav">
-        <div class="nav-tab active">
-          <div class="nav-icon">🏠</div>
-          <span>HOME</span>
-        </div>
-        <div class="nav-tab">
-          <div class="nav-icon">🏆</div>
-          <span>SCORES</span>
-        </div>
-        <div class="nav-tab">
-          <div class="nav-icon">⚙️</div>
-          <span>RULES</span>
-        </div>
+        <!-- Dynamic saved teams rendered via JavaScript -->
       </div>
     </div>
 
+    <!-- PAGE 2: SET THE SCENE (GAME SETUP) -->
     <div id="page-2" class="page">
       <div class="top-nav-bar">
         <button class="back-circle-btn" onclick="navigateTo('page-1')">‹</button>
@@ -62,6 +53,7 @@
         <div></div>
       </div>
 
+      <!-- STEP 01: NAME YOUR TEAM -->
       <div class="form-section">
         <div class="section-title-row">
           <span class="step-num">01</span>
@@ -76,6 +68,7 @@
         </div>
       </div>
 
+      <!-- STEP 02: ADD THE SUSPECTS (3 TO 20 PLAYERS) -->
       <div class="form-section">
         <div class="section-title-row space-between">
           <div style="display:flex; gap:10px; align-items:center;">
@@ -93,6 +86,7 @@
         <button class="add-suspect-btn" onclick="addSuspectField()">＋ Add another player</button>
       </div>
 
+      <!-- STEP 03: CHOOSE CATEGORIES -->
       <div class="form-section">
         <div class="section-title-row">
           <span class="step-num">03</span>
@@ -121,6 +115,7 @@
         </div>
       </div>
 
+      <!-- STEP 04: SET HIDDEN ROLES -->
       <div class="form-section">
         <div class="section-title-row">
           <span class="step-num">04</span>
@@ -182,6 +177,7 @@
       <p class="foot-summary-text" id="deal-summary-text">0 players · 1 Spy · 1 Mr White</p>
     </div>
 
+    <!-- PAGE 5: CARD PICKER -->
     <div id="page-5" class="page">
       <div class="top-nav-bar">
         <button class="back-circle-btn" onclick="confirmQuitGame()">‹</button>
@@ -195,6 +191,7 @@
       <div class="cards-grid" id="cards-grid"></div>
     </div>
 
+    <!-- PAGE 6: DISCUSSION BOARD -->
     <div id="page-6" class="page">
       <div class="top-nav-bar">
         <button class="back-circle-btn" onclick="confirmQuitGame()">‹</button>
@@ -215,24 +212,28 @@
       <button id="vote-action-btn" class="dark-primary-btn" onclick="toggleVoteMode()">Go to Vote →</button>
     </div>
 
+    <!-- PAGE 7: SUMMARY / RESULTS -->
     <div id="page-7" class="page">
       <div class="top-nav-bar">
         <button class="back-circle-btn" onclick="navigateTo('page-1')">‹</button>
         <h2 class="serif-head center">Game Results</h2>
-        <div></div>
+        <div style="width: 36px;"></div>
       </div>
 
-      <h1 class="summary-title" id="summary-title">Civilians Win!</h1>
-      <div class="words-summary-box">
-        <p>Civilian Word: <strong id="sum-civilian-word">-</strong></p>
-        <p>Spy Word: <strong id="sum-undercover-word">-</strong></p>
+      <div class="results-header-block">
+        <h1 class="summary-title" id="summary-title">Civilians Win! 🎉</h1>
+        <div class="words-summary-box">
+          <div class="word-row">Civilian Word: <strong id="sum-civilian-word">-</strong></div>
+          <div class="word-row">Spy Word: <strong id="sum-undercover-word">-</strong></div>
+        </div>
       </div>
 
       <div id="summary-players-list" class="summary-players-list"></div>
 
-      <button class="dark-primary-btn" onclick="navigateTo('page-1')">Back to Home</button>
+      <button class="dark-primary-btn margin-top-auto" onclick="navigateTo('page-1')">Back to Home</button>
     </div>
 
+    <!-- SECRET WORD REVEAL MODAL -->
     <div class="modal-overlay" id="card-modal">
       <div class="modal-card">
         <div class="avatar-bubble modal-avatar" id="modal-avatar">?</div>
@@ -243,6 +244,7 @@
       </div>
     </div>
 
+    <!-- ELIMINATE MODAL -->
     <div class="modal-overlay" id="eliminate-confirm-modal">
       <div class="modal-card">
         <h3 id="elim-player-title">Eliminate Player?</h3>
@@ -250,6 +252,7 @@
       </div>
     </div>
 
+    <!-- RESULT MODAL -->
     <div class="modal-overlay" id="result-modal">
       <div class="modal-card">
         <h2 id="result-role-title">Eliminated!</h2>
@@ -259,6 +262,7 @@
       </div>
     </div>
 
+    <!-- MR WHITE GUESS MODAL -->
     <div class="modal-overlay" id="mrwhite-guess-modal">
       <div class="modal-card">
         <h3>Mr. White's Guess</h3>
@@ -268,6 +272,7 @@
       </div>
     </div>
 
+    <!-- GAME OVER MODAL -->
     <div class="modal-overlay" id="game-over-modal">
       <div class="modal-card">
         <h2 id="game-over-title">Game Over</h2>

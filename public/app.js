@@ -151,9 +151,9 @@ function renderReadyTeams() {
   });
 }
 
-// Delete group option implementation
+// Delete crew feature implementation
 function deleteCrew(event, groupId) {
-  event.stopPropagation(); // Prevents loading the crew when clicking delete
+  event.stopPropagation();
   const team = groups.find(g => g.id === groupId);
   if (!team) return;
 
@@ -475,9 +475,12 @@ function goToSummaryPage() {
   list.innerHTML = '';
   activePlayers.forEach(p => {
     list.innerHTML += `
-      <div style="background:white; padding:10px; border-radius:12px; margin-bottom:6px; display:flex; justify-content:space-between; font-size:12px;">
-        <span><strong>${p.name}</strong> (${p.role})</span>
-        <span>${p.word}</span>
+      <div class="summary-player-card">
+        <div>
+          <span class="p-info">${p.name}</span>
+          <span class="p-role">(${p.role})</span>
+        </div>
+        <span class="p-word">${p.word}</span>
       </div>
     `;
   });
