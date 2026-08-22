@@ -10,51 +10,32 @@
 
   <div class="app-container">
 
-    <!-- PAGE 1: HOME DASHBOARD -->
     <div id="page-1" class="page active">
       <div class="top-nav-bar">
         <div class="app-brand"><span class="brand-badge">W</span> MR. WHITE</div>
         <div class="fresh-pill">965 FRESH</div>
       </div>
 
-      <!-- HERO BANNER / THEME CARD -->
       <div class="hero-card">
-        <span class="sub-label light-text">PASS THE PHONE · TRUST NO ONE</span>
-        <h1 class="serif-head light-text mt-8">Same room.<br>Different truths.</h1>
-        <p class="hero-tagline">Find the Spy. Expose Mr White. Try not to look suspicious.</p>
-
-        <button class="lime-primary-btn mt-16" onclick="openGameSetup()">
-          <span>Start a new game</span>
-          <span>→</span>
-        </button>
-
-        <div class="stats-row mt-16">
-          <div class="stat-pill">
-            <strong>3–20</strong>
-            <span>PLAYERS</span>
-          </div>
-          <div class="stat-pill">
-            <strong>1,000</strong>
-            <span>WORD PAIRS</span>
-          </div>
-          <div class="stat-pill">
-            <strong>10</strong>
-            <span>CATEGORIES</span>
-          </div>
+        <div class="hero-tag">PASS THE PHONE · TRUST NO ONE</div>
+        <h1 class="hero-title">Same room.<br><span class="highlight-text">Different truths.</span></h1>
+        <p class="hero-desc">Find the Spy. Expose Mr White. Try not to look suspicious.</p>
+        <button class="hero-btn" onclick="openGameSetup()">Start a new game →</button>
+        <div class="hero-stats">
+          <div><strong>3–20</strong><span>PLAYERS</span></div>
+          <div><strong>1,000</strong><span>WORD PAIRS</span></div>
+          <div><strong>10</strong><span>CATEGORIES</span></div>
         </div>
       </div>
 
-      <!-- YOUR CREWS / READY TEAMS FEATURE (BELOW HERO CARD) -->
-      <div class="section-header mt-20">
+      <div class="section-header">
         <span class="sub-label">YOUR CREWS</span>
         <h2 class="serif-head">Ready teams</h2>
       </div>
 
       <div class="ready-teams-scroll" id="ready-teams-list">
-        <!-- Dynamic saved teams with delete button rendered via JS -->
-      </div>
+        </div>
 
-      <!-- BOTTOM NAVIGATION BAR -->
       <div class="bottom-nav">
         <div class="nav-tab active">
           <div class="nav-icon">🏠</div>
@@ -71,7 +52,6 @@
       </div>
     </div>
 
-    <!-- PAGE 2: GAME SETUP -->
     <div id="page-2" class="page">
       <div class="top-nav-bar">
         <button class="back-circle-btn" onclick="navigateTo('page-1')">‹</button>
@@ -82,7 +62,6 @@
         <div></div>
       </div>
 
-      <!-- STEP 01: NAME YOUR TEAM -->
       <div class="form-section">
         <div class="section-title-row">
           <span class="step-num">01</span>
@@ -97,7 +76,6 @@
         </div>
       </div>
 
-      <!-- STEP 02: ADD THE SUSPECTS -->
       <div class="form-section">
         <div class="section-title-row space-between">
           <div style="display:flex; gap:10px; align-items:center;">
@@ -111,10 +89,10 @@
         </div>
         
         <div id="suspects-inputs-list" class="suspects-list"></div>
+
         <button class="add-suspect-btn" onclick="addSuspectField()">＋ Add another player</button>
       </div>
 
-      <!-- STEP 03: CHOOSE CATEGORIES -->
       <div class="form-section">
         <div class="section-title-row">
           <span class="step-num">03</span>
@@ -143,7 +121,6 @@
         </div>
       </div>
 
-      <!-- STEP 04: SET HIDDEN ROLES -->
       <div class="form-section">
         <div class="section-title-row">
           <span class="step-num">04</span>
@@ -205,7 +182,6 @@
       <p class="foot-summary-text" id="deal-summary-text">0 players · 1 Spy · 1 Mr White</p>
     </div>
 
-    <!-- PAGE 5: PASS THE PHONE CARD PICKER -->
     <div id="page-5" class="page">
       <div class="top-nav-bar">
         <button class="back-circle-btn" onclick="confirmQuitGame()">‹</button>
@@ -219,7 +195,6 @@
       <div class="cards-grid" id="cards-grid"></div>
     </div>
 
-    <!-- PAGE 6: DISCUSSION BOARD -->
     <div id="page-6" class="page">
       <div class="top-nav-bar">
         <button class="back-circle-btn" onclick="confirmQuitGame()">‹</button>
@@ -236,10 +211,10 @@
       </div>
 
       <div id="players-board-grid" class="players-board-grid"></div>
+
       <button id="vote-action-btn" class="dark-primary-btn" onclick="toggleVoteMode()">Go to Vote →</button>
     </div>
 
-    <!-- PAGE 7: SUMMARY -->
     <div id="page-7" class="page">
       <div class="top-nav-bar">
         <button class="back-circle-btn" onclick="navigateTo('page-1')">‹</button>
@@ -254,10 +229,10 @@
       </div>
 
       <div id="summary-players-list" class="summary-players-list"></div>
+
       <button class="dark-primary-btn" onclick="navigateTo('page-1')">Back to Home</button>
     </div>
 
-    <!-- MODALS -->
     <div class="modal-overlay" id="card-modal">
       <div class="modal-card">
         <div class="avatar-bubble modal-avatar" id="modal-avatar">?</div>

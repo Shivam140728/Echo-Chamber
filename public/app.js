@@ -71,6 +71,7 @@ let selectedCategories = [...ALL_CATEGORIES_LIST];
 let isAIModeEnabled = true;
 let lastMrWhitePlayerNames = [];
 
+// Saved Groups Persistent Store
 let groups = [
   { id: 'g1', name: 'Office', color: '#f96854', players: ['SN', 'AS', 'LA', 'AA', 'ME', 'AB'] },
   { id: 'g2', name: 'Team 5', color: '#6c5ce7', players: ['SN', 'AS', 'LA'] },
@@ -124,37 +125,39 @@ function openGameSetup() {
   navigateTo('page-2');
 }
 
-// Renders saved groups with click to load + trash icon to delete
+// Renders saved groups below hero banner with Delete option
 function renderReadyTeams() {
   const container = document.getElementById('ready-teams-list');
   container.innerHTML = '';
   
   if (groups.length === 0) {
-    container.innerHTML = `<p style="font-size:12px; color:#888; text-align:center; padding:10px;">No saved teams yet.</p>`;
+    container.innerHTML = `<p style="font-size:12px; color:#888; text-align:center; padding:10px;">No saved teams yet. Start a new game to create one!</p>`;
     return;
   }
 
   groups.forEach(g => {
     container.innerHTML += `
       <div class="ready-team-item">
-        <div class="team-info-left" onclick="loadCrewToSetup('${g.id}')">
+        <div class="team-main-info" onclick="loadCrewToSetup('${g.id}')">
           <div class="team-avatar-square" style="background:${g.color}">${g.name.charAt(0)}</div>
           <div>
             <h4>${g.name}</h4>
             <p>${g.players.length} players (${g.players.join(', ')})</p>
           </div>
         </div>
-        <button class="delete-group-btn" title="Delete Team" onclick="deleteGroup('${g.id}', event)">🗑️</button>
+        <button class="delete-crew-btn" onclick="deleteCrew(event, '${g.id}')" title="Delete Team">🗑️</button>
       </div>
     `;
   });
 }
 
-// Delete group function
-function deleteGroup(groupId, event) {
-  event.stopPropagation(); // Prevents loading the team when clicking delete button
-  const group = groups.find(g => g.id === groupId);
-  if (group && confirm(`Are you sure you want to delete "${group.name}"?`)) {
+// Delete group option implementation
+function deleteCrew(event, groupId) {
+  event.stopPropagation(); // Prevents loading the crew when clicking delete
+  const team = groups.find(g => g.id === groupId);
+  if (!team) return;
+
+  if (confirm(`Are you sure you want to delete "${team.name}"?`)) {
     groups = groups.filter(g => g.id !== groupId);
     saveToStorage();
     renderReadyTeams();
@@ -290,7 +293,7 @@ async function startGame() {
   if (selectedCategories.length === 0) return alert("Please select at least one category.");
 
   const teamName = document.getElementById('setup-team-name').value.trim() || 'Custom Crew';
-
+  
   const existingIndex = groups.findIndex(g => g.name.toLowerCase() === teamName.toLowerCase());
   if (existingIndex >= 0) {
     groups[existingIndex].players = [...currentSuspects];
