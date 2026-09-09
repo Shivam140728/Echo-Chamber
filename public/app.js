@@ -86,6 +86,7 @@ let currentWordPair = null;
 let gameCards = [];
 let currentPickerIndex = 0;
 let activePlayers = [];
+let descriptionOrder = []; // Dynamic description turn sequence
 let isVotingMode = false;
 let playerToEliminate = null;
 let suspectedRole = null;
@@ -374,8 +375,25 @@ function closeCardModal() {
   }
 }
 
+// Requirement 1: Shuffle player sequence each round & ensure Mr. White is never first
+function generateDescriptionSequence() {
+  let remaining = activePlayers.filter(p => !p.eliminated);
+  remaining.sort(() => Math.random() - 0.5);
+
+  // If the first player is Mr. White, rotate until a non-Mr. White player starts
+  if (remaining.length > 1 && remaining[0].role === 'MR_WHITE') {
+    let nonWhiteIdx = remaining.findIndex(p => p.role !== 'MR_WHITE');
+    if (nonWhiteIdx !== -1) {
+      let nonWhitePlayer = remaining.splice(nonWhiteIdx, 1)[0];
+      remaining.unshift(nonWhitePlayer);
+    }
+  }
+  descriptionOrder = remaining;
+}
+
 function initDescriptionBoard() {
   isVotingMode = false;
+  generateDescriptionSequence();
   renderBoardUI();
 }
 
@@ -392,11 +410,14 @@ function renderBoardUI() {
 
   const grid = document.getElementById('players-board-grid');
   grid.innerHTML = '';
-  remaining.forEach(p => {
+
+  const displayList = isVotingMode ? remaining : descriptionOrder;
+  displayList.forEach((p, index) => {
     grid.innerHTML += `
       <div class="player-card-node">
         <div class="avatar-large">${p.name.substring(0, 2)}</div>
         <span style="font-size:11px; font-weight:700;">${p.name}</span>
+        ${!isVotingMode ? `<span style="font-size:9px; color:#888; margin-top:2px;">Turn #${index + 1}</span>` : ''}
         ${isVotingMode ? `<button style="background:#f96854; color:white; border:none; padding:2px 8px; border-radius:10px; font-size:9px; margin-top:4px;" onclick="openEliminateModal('${p.name}')">Eliminate</button>` : ''}
       </div>
     `;
@@ -419,7 +440,6 @@ function openEliminateModal(name) {
   const container = document.getElementById('elimination-options-container');
   container.innerHTML = '';
 
-  // Requirement 6: Hide role options if no player with that role remains active
   if (hasMrWhite) {
     container.innerHTML += `<button class="dark-primary-btn" onclick="confirmElimination('MR_WHITE')">Eliminate as Mr. White 🕵️‍♂️</button>`;
   }
@@ -434,7 +454,6 @@ function confirmElimination(role) {
   suspectedRole = role;
   document.getElementById('eliminate-confirm-modal').classList.remove('active');
 
-  // Requirement 1: Guess mechanic when voting/eliminating for Mr. White
   if (suspectedRole === 'MR_WHITE') {
     document.getElementById('mrwhite-word-input').value = '';
     document.getElementById('mrwhite-guess-modal').classList.add('active');
@@ -447,14 +466,16 @@ function submitMrWhiteGuess() {
   const guess = document.getElementById('mrwhite-word-input').value.trim().toUpperCase();
   document.getElementById('mrwhite-guess-modal').classList.remove('active');
 
-  // Requirement 1: If Mr. White guesses correct word -> Instant Win
   if (guess === currentWordPair.civilian.toUpperCase()) {
     winningTeam = 'MR_WHITE';
     triggerGameOver("Mr. White guessed the secret word correctly and won the game!");
   } else {
-    // Requirement 1: Wrong word -> Mr. White is eliminated & game continues
-    alert("Wrong guess! Player is eliminated.");
-    processEliminationResult();
+    // Requirement 2: Show result popup when Mr. White guesses wrong and loses
+    playerToEliminate.eliminated = true;
+    document.getElementById('result-role-title').innerText = `MR. WHITE GUESS FAILED!`;
+    document.getElementById('result-avatar').innerText = playerToEliminate.name.charAt(0);
+    document.getElementById('result-player-name').innerText = `${playerToEliminate.name} guessed "${guess}" and lost!`;
+    document.getElementById('result-modal').classList.add('active');
   }
 }
 
@@ -476,42 +497,35 @@ function checkWinConditions() {
   const remaining = activePlayers.filter(p => !p.eliminated);
   const remainingMrWhite = remaining.filter(p => p.role === 'MR_WHITE');
   const remainingUndercover = remaining.filter(p => p.role === 'UNDERCOVER');
-  const remainingCivilians = remaining.filter(p => p.role === 'CIVILIAN');
 
-  // Requirement 4: Once Civilians find and eliminate all Mr. Whites and Undercovers -> Civilians Win
   if (remainingMrWhite.length === 0 && remainingUndercover.length === 0) {
     winningTeam = 'CIVILIANS';
     triggerGameOver("Civilians Win! All Mr. Whites and Undercovers have been eliminated.");
     return;
   }
 
-  // Requirement 5: Exactly 2 players remaining scenario evaluations
   if (remaining.length === 2) {
     const p1 = remaining[0];
     const p2 = remaining[1];
 
-    // (A) 1 Mr. White & 1 Civilian -> Mr. White Wins
     if ((p1.role === 'MR_WHITE' && p2.role === 'CIVILIAN') || (p2.role === 'MR_WHITE' && p1.role === 'CIVILIAN')) {
       winningTeam = 'MR_WHITE';
       triggerGameOver("Mr. White Wins! 1 Mr. White and 1 Civilian remaining.");
       return;
     }
 
-    // (B) 1 Mr. White & 1 Undercover -> Both Win
     if ((p1.role === 'MR_WHITE' && p2.role === 'UNDERCOVER') || (p2.role === 'MR_WHITE' && p1.role === 'UNDERCOVER')) {
       winningTeam = 'MR_WHITE_AND_UNDERCOVER';
       triggerGameOver("Mr. White & Undercover Win! 1 Mr. White and 1 Undercover remaining.");
       return;
     }
 
-    // (C) 1 Undercover & 1 Civilian -> Undercover Wins
     if ((p1.role === 'UNDERCOVER' && p2.role === 'CIVILIAN') || (p2.role === 'UNDERCOVER' && p1.role === 'CIVILIAN')) {
       winningTeam = 'UNDERCOVER';
       triggerGameOver("Undercover Wins! 1 Undercover and 1 Civilian remaining.");
       return;
     }
 
-    // (D) 2 Civilians -> Civilians Win
     if (p1.role === 'CIVILIAN' && p2.role === 'CIVILIAN') {
       winningTeam = 'CIVILIANS';
       triggerGameOver("Civilians Win! Only Civilians are left.");
@@ -519,7 +533,6 @@ function checkWinConditions() {
     }
   }
 
-  // Continue current game session
   initDescriptionBoard();
 }
 
@@ -563,6 +576,11 @@ function goToSummaryPage() {
   });
 
   navigateTo('page-7');
+}
+
+// Requirement 3: Instant Play Again Functionality
+function playAgain() {
+  startGame();
 }
 
 function confirmQuitGame() {

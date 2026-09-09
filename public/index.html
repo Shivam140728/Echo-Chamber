@@ -230,7 +230,11 @@
 
       <div id="summary-players-list" class="summary-players-list"></div>
 
-      <button class="dark-primary-btn margin-top-auto" onclick="navigateTo('page-1')">Back to Home</button>
+      <!-- ACTION BUTTONS ROW: Home & Play Again -->
+      <div style="display: flex; gap: 10px; margin-top: auto;">
+        <button class="dark-primary-btn" style="flex: 1;" onclick="navigateTo('page-1')">Back to Home</button>
+        <button class="dark-primary-btn" style="flex: 1; background: #ccf144; color: #111;" onclick="playAgain()">Play Again 🔄</button>
+      </div>
     </div>
 
     <!-- SECRET WORD REVEAL MODAL -->
