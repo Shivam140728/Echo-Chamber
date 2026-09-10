@@ -71,7 +71,6 @@ let selectedCategories = [...ALL_CATEGORIES_LIST];
 let isAIModeEnabled = true;
 let lastMrWhitePlayerNames = [];
 
-// Saved Groups Persistent Store
 let groups = [
   { id: 'g1', name: 'Office', color: '#f96854', players: ['SN', 'AS', 'LA', 'AA', 'ME', 'AB'] },
   { id: 'g2', name: 'Team 5', color: '#6c5ce7', players: ['SN', 'AS', 'LA'] },
@@ -86,10 +85,9 @@ let currentWordPair = null;
 let gameCards = [];
 let currentPickerIndex = 0;
 let activePlayers = [];
-let descriptionOrder = []; // Dynamic description turn sequence
+let descriptionOrder = []; 
 let isVotingMode = false;
 let playerToEliminate = null;
-let suspectedRole = null;
 let winningTeam = "";
 
 function initApp() {
@@ -313,6 +311,7 @@ async function startGame() {
   let playersPool = [...currentSuspects].sort(() => Math.random() - 0.5);
   currentWordPair = await getNextWordPair();
 
+  // Fix 3: Ensure Mr. White changes every game
   let eligibleMrWhites = playersPool.filter(p => !lastMrWhitePlayerNames.includes(p));
   if (eligibleMrWhites.length < mrWhiteCount) eligibleMrWhites = playersPool;
   eligibleMrWhites.sort(() => Math.random() - 0.5);
@@ -339,7 +338,18 @@ async function startGame() {
     };
   });
 
-  gameCards = activePlayers.map(p => ({ ...p, used: false }));
+  // Fix 3: Ensure Mr. White is NOT the 1st person during card picking
+  gameCards = [...activePlayers];
+  if (gameCards.length > 1 && gameCards[0].role === 'MR_WHITE') {
+    let nonWhiteIdx = gameCards.findIndex(p => p.role !== 'MR_WHITE');
+    if (nonWhiteIdx !== -1) {
+      let temp = gameCards[0];
+      gameCards[0] = gameCards[nonWhiteIdx];
+      gameCards[nonWhiteIdx] = temp;
+    }
+  }
+
+  gameCards = gameCards.map(p => ({ ...p, used: false }));
   currentPickerIndex = 0;
   renderCardsGrid();
   navigateTo('page-5');
@@ -368,19 +378,19 @@ function closeCardModal() {
   document.getElementById('card-modal').classList.remove('active');
   currentPickerIndex++;
   if (currentPickerIndex >= gameCards.length) {
-    initDescriptionBoard();
+    // Fix 2: Initialize turn sequence ONCE after all cards are picked
+    initDescriptionSequence();
     navigateTo('page-6');
   } else {
     renderCardsGrid();
   }
 }
 
-// Requirement 1: Shuffle player sequence each round & ensure Mr. White is never first
-function generateDescriptionSequence() {
+// Fix 2 & 3: Generate sequence after cards, dynamic shuffle, and prevent Mr. White from starting
+function initDescriptionSequence() {
   let remaining = activePlayers.filter(p => !p.eliminated);
   remaining.sort(() => Math.random() - 0.5);
 
-  // If the first player is Mr. White, rotate until a non-Mr. White player starts
   if (remaining.length > 1 && remaining[0].role === 'MR_WHITE') {
     let nonWhiteIdx = remaining.findIndex(p => p.role !== 'MR_WHITE');
     if (nonWhiteIdx !== -1) {
@@ -389,11 +399,7 @@ function generateDescriptionSequence() {
     }
   }
   descriptionOrder = remaining;
-}
-
-function initDescriptionBoard() {
   isVotingMode = false;
-  generateDescriptionSequence();
   renderBoardUI();
 }
 
@@ -411,14 +417,16 @@ function renderBoardUI() {
   const grid = document.getElementById('players-board-grid');
   grid.innerHTML = '';
 
-  const displayList = isVotingMode ? remaining : descriptionOrder;
+  // Fix 2: Sequence does NOT change between discussion and voting
+  const displayList = descriptionOrder.filter(p => !p.eliminated);
+
   displayList.forEach((p, index) => {
     grid.innerHTML += `
       <div class="player-card-node">
         <div class="avatar-large">${p.name.substring(0, 2)}</div>
         <span style="font-size:11px; font-weight:700;">${p.name}</span>
-        ${!isVotingMode ? `<span style="font-size:9px; color:#888; margin-top:2px;">Turn #${index + 1}</span>` : ''}
-        ${isVotingMode ? `<button style="background:#f96854; color:white; border:none; padding:2px 8px; border-radius:10px; font-size:9px; margin-top:4px;" onclick="openEliminateModal('${p.name}')">Eliminate</button>` : ''}
+        <span style="font-size:9px; color:#888; margin-top:2px;">Turn #${index + 1}</span>
+        ${isVotingMode ? `<button style="background:#f96854; color:white; border:none; padding:2px 8px; border-radius:10px; font-size:9px; margin-top:4px; cursor:pointer;" onclick="openEliminateModal('${p.name}')">Eliminate</button>` : ''}
       </div>
     `;
   });
@@ -432,29 +440,14 @@ function toggleVoteMode() {
 function openEliminateModal(name) {
   playerToEliminate = activePlayers.find(p => p.name === name);
   document.getElementById('elim-player-title').innerText = `Eliminate ${playerToEliminate.name}?`;
-  
-  const remaining = activePlayers.filter(p => !p.eliminated);
-  const hasMrWhite = remaining.some(p => p.role === 'MR_WHITE');
-  const hasUndercover = remaining.some(p => p.role === 'UNDERCOVER');
-
-  const container = document.getElementById('elimination-options-container');
-  container.innerHTML = '';
-
-  if (hasMrWhite) {
-    container.innerHTML += `<button class="dark-primary-btn" onclick="confirmElimination('MR_WHITE')">Eliminate as Mr. White 🕵️‍♂️</button>`;
-  }
-  if (hasUndercover) {
-    container.innerHTML += `<button class="dark-primary-btn" onclick="confirmElimination('UNDERCOVER')">Eliminate as Spy 🕵️</button>`;
-  }
-
   document.getElementById('eliminate-confirm-modal').classList.add('active');
 }
 
-function confirmElimination(role) {
-  suspectedRole = role;
+// Fix 1: True role check upon voting
+function confirmEliminationChoice() {
   document.getElementById('eliminate-confirm-modal').classList.remove('active');
 
-  if (suspectedRole === 'MR_WHITE') {
+  if (playerToEliminate.role === 'MR_WHITE') {
     document.getElementById('mrwhite-word-input').value = '';
     document.getElementById('mrwhite-guess-modal').classList.add('active');
   } else {
@@ -470,11 +463,10 @@ function submitMrWhiteGuess() {
     winningTeam = 'MR_WHITE';
     triggerGameOver("Mr. White guessed the secret word correctly and won the game!");
   } else {
-    // Requirement 2: Show result popup when Mr. White guesses wrong and loses
     playerToEliminate.eliminated = true;
     document.getElementById('result-role-title').innerText = `MR. WHITE GUESS FAILED!`;
     document.getElementById('result-avatar').innerText = playerToEliminate.name.charAt(0);
-    document.getElementById('result-player-name').innerText = `${playerToEliminate.name} guessed "${guess}" and lost!`;
+    document.getElementById('result-player-name').innerText = `${playerToEliminate.name} guessed "${guess}" incorrectly!`;
     document.getElementById('result-modal').classList.add('active');
   }
 }
@@ -533,7 +525,8 @@ function checkWinConditions() {
     }
   }
 
-  initDescriptionBoard();
+  isVotingMode = false;
+  renderBoardUI();
 }
 
 function triggerGameOver(msg) {
@@ -578,7 +571,6 @@ function goToSummaryPage() {
   navigateTo('page-7');
 }
 
-// Requirement 3: Instant Play Again Functionality
 function playAgain() {
   startGame();
 }
