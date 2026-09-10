@@ -311,7 +311,6 @@ async function startGame() {
   let playersPool = [...currentSuspects].sort(() => Math.random() - 0.5);
   currentWordPair = await getNextWordPair();
 
-  // Fix 3: Ensure Mr. White changes every game
   let eligibleMrWhites = playersPool.filter(p => !lastMrWhitePlayerNames.includes(p));
   if (eligibleMrWhites.length < mrWhiteCount) eligibleMrWhites = playersPool;
   eligibleMrWhites.sort(() => Math.random() - 0.5);
@@ -338,7 +337,6 @@ async function startGame() {
     };
   });
 
-  // Fix 3: Ensure Mr. White is NOT the 1st person during card picking
   gameCards = [...activePlayers];
   if (gameCards.length > 1 && gameCards[0].role === 'MR_WHITE') {
     let nonWhiteIdx = gameCards.findIndex(p => p.role !== 'MR_WHITE');
@@ -378,7 +376,6 @@ function closeCardModal() {
   document.getElementById('card-modal').classList.remove('active');
   currentPickerIndex++;
   if (currentPickerIndex >= gameCards.length) {
-    // Fix 2: Initialize turn sequence ONCE after all cards are picked
     initDescriptionSequence();
     navigateTo('page-6');
   } else {
@@ -386,7 +383,6 @@ function closeCardModal() {
   }
 }
 
-// Fix 2 & 3: Generate sequence after cards, dynamic shuffle, and prevent Mr. White from starting
 function initDescriptionSequence() {
   let remaining = activePlayers.filter(p => !p.eliminated);
   remaining.sort(() => Math.random() - 0.5);
@@ -417,7 +413,6 @@ function renderBoardUI() {
   const grid = document.getElementById('players-board-grid');
   grid.innerHTML = '';
 
-  // Fix 2: Sequence does NOT change between discussion and voting
   const displayList = descriptionOrder.filter(p => !p.eliminated);
 
   displayList.forEach((p, index) => {
@@ -440,17 +435,30 @@ function toggleVoteMode() {
 function openEliminateModal(name) {
   playerToEliminate = activePlayers.find(p => p.name === name);
   document.getElementById('elim-player-title').innerText = `Eliminate ${playerToEliminate.name}?`;
+
+  const container = document.getElementById('elimination-options-container');
+  container.innerHTML = `
+    <button class="dark-primary-btn" onclick="confirmEliminationOption('MR_WHITE')">Eliminate as Mr. White 🕵️‍♂️</button>
+    <button class="dark-primary-btn" onclick="confirmEliminationOption('UNDERCOVER')">Eliminate as Spy 🕵️</button>
+  `;
+
   document.getElementById('eliminate-confirm-modal').classList.add('active');
 }
 
-// Fix 1: True role check upon voting
-function confirmEliminationChoice() {
+// Fixed option handler
+function confirmEliminationOption(chosenOption) {
   document.getElementById('eliminate-confirm-modal').classList.remove('active');
 
-  if (playerToEliminate.role === 'MR_WHITE') {
-    document.getElementById('mrwhite-word-input').value = '';
-    document.getElementById('mrwhite-guess-modal').classList.add('active');
+  if (chosenOption === 'MR_WHITE') {
+    // Only grant the word guess window if they actually are Mr. White
+    if (playerToEliminate.role === 'MR_WHITE') {
+      document.getElementById('mrwhite-word-input').value = '';
+      document.getElementById('mrwhite-guess-modal').classList.add('active');
+    } else {
+      processEliminationResult();
+    }
   } else {
+    // Eliminating as Undercover/Spy (or standard elimination)
     processEliminationResult();
   }
 }
