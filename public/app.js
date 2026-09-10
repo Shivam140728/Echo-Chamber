@@ -1,4 +1,4 @@
-// Updated 14 Categories
+// 14 Game Categories
 const ALL_CATEGORIES_LIST = [
   "Every day life", "Tools", "Society & Occupation", "School & Education", 
   "Work & Office", "Sports and Hobbies", "Media & Entertainment", 
@@ -6,35 +6,9 @@ const ALL_CATEGORIES_LIST = [
   "Animal", "Object", "Personal Electronic", "Consumer Tech"
 ];
 
-// Fallback pool in case Gemini API Key is missing
-const fallbackPairs = {
-  "Every day life": [{ civilian: "ALARM", undercover: "TIMER" }],
-  "Tools": [{ civilian: "HAMMER", undercover: "MALLET" }],
-  "Society & Occupation": [{ civilian: "DOCTOR", undercover: "NURSE" }],
-  "School & Education": [{ civilian: "PENCIL", undercover: "PEN" }],
-  "Work & Office": [{ civilian: "LAPTOP", undercover: "TABLET" }],
-  "Sports and Hobbies": [{ civilian: "FOOTBALL", undercover: "RUGBY" }],
-  "Media & Entertainment": [{ civilian: "MOVIE", undercover: "SERIES" }],
-  "World & Geography": [{ civilian: "OCEAN", undercover: "SEA" }],
-  "Food & Culinary": [{ civilian: "COFFEE", undercover: "TEA" }],
-  "Around the House": [{ civilian: "SOFA", undercover: "COUCH" }],
-  "Animal": [{ civilian: "LION", undercover: "TIGER" }],
-  "Object": [{ civilian: "CHAIR", undercover: "STOOL" }],
-  "Personal Electronic": [{ civilian: "PHONE", undercover: "SMARTWATCH" }],
-  "Consumer Tech": [{ civilian: "DRONE", undercover: "CAMERA" }]
-};
-
 let selectedCategories = [...ALL_CATEGORIES_LIST];
-let isAIModeEnabled = true;
 let geminiApiKey = "";
-let usedWordsHistory = [];
 let lastMrWhitePlayerNames = [];
-
-let groups = [
-  { id: 'g1', name: 'Office', color: '#f96854', players: ['SN', 'AS', 'LA', 'AA', 'ME', 'AB'] },
-  { id: 'g2', name: 'Team 5', color: '#6c5ce7', players: ['SN', 'AS', 'LA'] },
-  { id: 'g3', name: 'Bangalore Friends', color: '#00b894', players: ['SN', 'AS', 'LA', 'AA', 'ME'] }
-];
 
 let currentSuspects = ['Player 1', 'Player 2', 'Player 3'];
 let undercoverCount = 1;
@@ -51,28 +25,19 @@ let winningTeam = "";
 
 function initApp() {
   loadFromStorage();
-  renderReadyTeams();
   renderSuspectsInputs();
   renderCategoriesUI();
   updateSetupUI();
 }
 
 function saveToStorage() {
-  localStorage.setItem('uw_groups', JSON.stringify(groups));
   localStorage.setItem('uw_last_white', JSON.stringify(lastMrWhitePlayerNames));
-  localStorage.setItem('uw_used_words', JSON.stringify(usedWordsHistory));
   localStorage.setItem('uw_gemini_key', geminiApiKey);
 }
 
 function loadFromStorage() {
-  const storedGroups = localStorage.getItem('uw_groups');
-  if (storedGroups) { try { groups = JSON.parse(storedGroups); } catch(e){} }
-
   const storedWhite = localStorage.getItem('uw_last_white');
   if (storedWhite) { try { lastMrWhitePlayerNames = JSON.parse(storedWhite); } catch(e){} }
-
-  const storedWords = localStorage.getItem('uw_used_words');
-  if (storedWords) { try { usedWordsHistory = JSON.parse(storedWords); } catch(e){} }
 
   geminiApiKey = localStorage.getItem('uw_gemini_key') || "";
   if (document.getElementById('gemini-api-key')) {
@@ -90,62 +55,9 @@ function navigateTo(pageId) {
   document.getElementById(pageId).classList.add('active');
 }
 
-function openGameSetup() {
-  renderSuspectsInputs();
-  updateSetupUI();
-  navigateTo('page-2');
-}
-
-function renderReadyTeams() {
-  const container = document.getElementById('ready-teams-list');
-  container.innerHTML = '';
-  
-  if (groups.length === 0) {
-    container.innerHTML = `<p style="font-size:12px; color:#888; text-align:center; padding:10px;">No saved teams yet. Start a new game to create one!</p>`;
-    return;
-  }
-
-  groups.forEach(g => {
-    container.innerHTML += `
-      <div class="ready-team-item">
-        <div class="team-main-info" onclick="loadCrewToSetup('${g.id}')">
-          <div class="team-avatar-square" style="background:${g.color}">${g.name.charAt(0)}</div>
-          <div>
-            <h4>${g.name}</h4>
-            <p>${g.players.length} players (${g.players.join(', ')})</p>
-          </div>
-        </div>
-        <button class="delete-crew-btn" onclick="deleteCrew(event, '${g.id}')" title="Delete Team">🗑️</button>
-      </div>
-    `;
-  });
-}
-
-function deleteCrew(event, groupId) {
-  event.stopPropagation();
-  const team = groups.find(g => g.id === groupId);
-  if (!team) return;
-
-  if (confirm(`Are you sure you want to delete "${team.name}"?`)) {
-    groups = groups.filter(g => g.id !== groupId);
-    saveToStorage();
-    renderReadyTeams();
-  }
-}
-
-function loadCrewToSetup(groupId) {
-  const g = groups.find(item => item.id === groupId);
-  if (g) {
-    document.getElementById('setup-team-name').value = g.name;
-    currentSuspects = [...g.players];
-    renderSuspectsInputs();
-    updateSetupUI();
-    navigateTo('page-2');
-  }
-}
-
 function renderSuspectsInputs() {
   const list = document.getElementById('suspects-inputs-list');
+  if (!list) return;
   list.innerHTML = '';
   currentSuspects.forEach((name, idx) => {
     const num = (idx + 1).toString().padStart(2, '0');
@@ -195,15 +107,6 @@ function updateSetupUI() {
   document.getElementById('deal-summary-text').innerText = `${currentSuspects.length} players · ${undercoverCount} Spy · ${mrWhiteCount} Mr White`;
 }
 
-function toggleAllCategories() {
-  if (selectedCategories.length === ALL_CATEGORIES_LIST.length) {
-    selectedCategories = [];
-  } else {
-    selectedCategories = [...ALL_CATEGORIES_LIST];
-  }
-  renderCategoriesUI();
-}
-
 function toggleCategory(catName) {
   if (selectedCategories.includes(catName)) {
     selectedCategories = selectedCategories.filter(c => c !== catName);
@@ -214,27 +117,8 @@ function toggleCategory(catName) {
 }
 
 function renderCategoriesUI() {
-  const allChip = document.getElementById('cat-chip-all');
-  const allLabel = document.getElementById('all-cat-label');
-  const allCheck = document.getElementById('all-cat-check');
-
-  if (selectedCategories.length === ALL_CATEGORIES_LIST.length) {
-    allChip.classList.remove('unselected');
-    allChip.classList.add('active');
-    allLabel.innerText = "✨ All categories selected";
-    allCheck.style.display = "inline";
-  } else if (selectedCategories.length === 0) {
-    allChip.classList.remove('active');
-    allChip.classList.add('unselected');
-    allLabel.innerText = "✨ Select all categories";
-    allCheck.style.display = "none";
-  } else {
-    allChip.classList.remove('active', 'unselected');
-    allLabel.innerText = `✨ ${selectedCategories.length} categories selected`;
-    allCheck.style.display = "none";
-  }
-
   const container = document.getElementById('categories-grid');
+  if (!container) return;
   container.innerHTML = '';
   ALL_CATEGORIES_LIST.forEach(cat => {
     const isSelected = selectedCategories.includes(cat);
@@ -246,77 +130,73 @@ function renderCategoriesUI() {
   });
 }
 
-function toggleAIMode(enabled) { isAIModeEnabled = enabled; }
+// Online Real-time AI Fetching via Gemini API (No local word storage)
+async function fetchOnlineWordPair() {
+  if (!geminiApiKey) {
+    alert("Please enter a valid Gemini API key in the setup screen to get AI words online.");
+    return null;
+  }
 
-// Fetch fresh, non-repeating words via Gemini API
-async function getNextWordPair() {
   if (selectedCategories.length === 0) {
     selectedCategories = [...ALL_CATEGORIES_LIST];
     renderCategoriesUI();
   }
 
-  const chosenCat = selectedCategories[Math.floor(Math.random() * selectedCategories.length)];
+  // Select a random category from active user selections
+  const chosenCategory = selectedCategories[Math.floor(Math.random() * selectedCategories.length)];
+  const randomSeed = Math.floor(Math.random() * 100000); // Random seed ensures unique responses
 
-  if (geminiApiKey) {
-    try {
-      const prompt = `Generate 1 unique pair of closely related words for an "Undercover" word game in JSON format.
-      Category: "${chosenCat}".
-      Do NOT use any of these previously used words: ${JSON.stringify(usedWordsHistory.slice(-100))}.
-      Output MUST be valid raw JSON only without markdown or extra text: {"civilian": "WORD1", "undercover": "WORD2"}`;
+  const prompt = `Generate 1 completely random and unique pair of closely related secret words for an "Undercover" game.
+  Category: "${chosenCategory}".
+  Random Seed: ${randomSeed}.
+  Make sure the civilian word and undercover word are distinct, creative, and closely related.
+  Output MUST be strictly raw JSON in this format without markdown or extra explanation:
+  {"civilian": "WORD1", "undercover": "WORD2"}`;
 
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }]
-        })
-      });
+  try {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          responseMimeType: "application/json"
+        }
+      })
+    });
 
-      const data = await res.json();
-      const rawText = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
-      const parsed = JSON.parse(rawText);
-
-      usedWordsHistory.push(parsed.civilian.toUpperCase(), parsed.undercover.toUpperCase());
-      saveToStorage();
-
-      return { civilian: parsed.civilian.toUpperCase(), undercover: parsed.undercover.toUpperCase() };
-    } catch (e) {
-      console.warn("Gemini API call failed or missing, using local fallback:", e);
+    const data = await res.json();
+    
+    if (data.error) {
+      alert("Gemini API Error: " + data.error.message);
+      return null;
     }
-  }
 
-  // Fallback when API key is not present or API call fails
-  const pool = fallbackPairs[chosenCat] || [{ civilian: "OBJECT", undercover: "ITEM" }];
-  const pair = pool[Math.floor(Math.random() * pool.length)];
-  usedWordsHistory.push(pair.civilian, pair.undercover);
-  saveToStorage();
-  return { civilian: pair.civilian, undercover: pair.undercover };
+    const rawText = data.candidates[0].content.parts[0].text.trim();
+    const parsed = JSON.parse(rawText);
+
+    return { 
+      civilian: parsed.civilian.toUpperCase(), 
+      undercover: parsed.undercover.toUpperCase(),
+      category: chosenCategory
+    };
+  } catch (e) {
+    alert("Failed to fetch word from AI online. Please check internet connection or API key.");
+    console.error("Online AI Search Error:", e);
+    return null;
+  }
 }
 
 async function startGame() {
   if (currentSuspects.length < 3) return alert("Minimum 3 players required.");
   if (selectedCategories.length === 0) return alert("Please select at least one category.");
+  if (!geminiApiKey) return alert("Gemini API Key is required to fetch words online!");
 
-  const teamName = document.getElementById('setup-team-name').value.trim() || 'Custom Crew';
-  
-  const existingIndex = groups.findIndex(g => g.name.toLowerCase() === teamName.toLowerCase());
-  if (existingIndex >= 0) {
-    groups[existingIndex].players = [...currentSuspects];
-  } else {
-    const colors = ['#f96854', '#6c5ce7', '#00b894', '#fdcb6e', '#e84393'];
-    const randomColor = colors[Math.floor(Math.random() * colors.length)];
-    groups.push({
-      id: 'g_' + Date.now(),
-      name: teamName,
-      color: randomColor,
-      players: [...currentSuspects]
-    });
-  }
-  saveToStorage();
-  renderReadyTeams();
+  // Fetch brand new words online
+  currentWordPair = await fetchOnlineWordPair();
+  if (!currentWordPair) return; // Stop if API call failed
 
   let playersPool = [...currentSuspects].sort(() => Math.random() - 0.5);
-  currentWordPair = await getNextWordPair();
 
   let eligibleMrWhites = playersPool.filter(p => !lastMrWhitePlayerNames.includes(p));
   if (eligibleMrWhites.length < mrWhiteCount) eligibleMrWhites = playersPool;
@@ -344,17 +224,7 @@ async function startGame() {
     };
   });
 
-  gameCards = [...activePlayers];
-  if (gameCards.length > 1 && gameCards[0].role === 'MR_WHITE') {
-    let nonWhiteIdx = gameCards.findIndex(p => p.role !== 'MR_WHITE');
-    if (nonWhiteIdx !== -1) {
-      let temp = gameCards[0];
-      gameCards[0] = gameCards[nonWhiteIdx];
-      gameCards[nonWhiteIdx] = temp;
-    }
-  }
-
-  gameCards = gameCards.map(p => ({ ...p, used: false }));
+  gameCards = activePlayers.map(p => ({ ...p, used: false }));
   currentPickerIndex = 0;
   renderCardsGrid();
   navigateTo('page-5');
@@ -393,14 +263,6 @@ function closeCardModal() {
 function initDescriptionSequence() {
   let remaining = activePlayers.filter(p => !p.eliminated);
   remaining.sort(() => Math.random() - 0.5);
-
-  if (remaining.length > 1 && remaining[0].role === 'MR_WHITE') {
-    let nonWhiteIdx = remaining.findIndex(p => p.role !== 'MR_WHITE');
-    if (nonWhiteIdx !== -1) {
-      let nonWhitePlayer = remaining.splice(nonWhiteIdx, 1)[0];
-      remaining.unshift(nonWhitePlayer);
-    }
-  }
   descriptionOrder = remaining;
   isVotingMode = false;
   renderBoardUI();
@@ -442,14 +304,6 @@ function toggleVoteMode() {
 function openEliminateModal(name) {
   playerToEliminate = activePlayers.find(p => p.name === name);
   document.getElementById('elim-player-title').innerText = `Eliminate ${playerToEliminate.name}?`;
-
-  const remaining = activePlayers.filter(p => !p.eliminated);
-  const mwLeft = remaining.filter(p => p.role === 'MR_WHITE').length;
-  const spyLeft = remaining.filter(p => p.role === 'UNDERCOVER').length;
-
-  document.getElementById('btn-elim-mrwhite').style.display = mwLeft > 0 ? 'block' : 'none';
-  document.getElementById('btn-elim-undercover').style.display = spyLeft > 0 ? 'block' : 'none';
-
   document.getElementById('eliminate-confirm-modal').classList.add('active');
 }
 
@@ -505,31 +359,15 @@ function checkWinConditions() {
     return;
   }
 
-  if (remaining.length === 2) {
-    const p1 = remaining[0];
-    const p2 = remaining[1];
-
-    if ((p1.role === 'MR_WHITE' && p2.role === 'CIVILIAN') || (p2.role === 'MR_WHITE' && p1.role === 'CIVILIAN')) {
+  if (remaining.length <= 2) {
+    if (remainingMrWhite.length > 0) {
       winningTeam = 'MR_WHITE';
-      triggerGameOver("Mr. White Wins! 1 Mr. White and 1 Civilian remaining.");
+      triggerGameOver("Mr. White Wins!");
       return;
     }
-
-    if ((p1.role === 'MR_WHITE' && p2.role === 'UNDERCOVER') || (p2.role === 'MR_WHITE' && p1.role === 'UNDERCOVER')) {
-      winningTeam = 'MR_WHITE_AND_UNDERCOVER';
-      triggerGameOver("Mr. White & Undercover Win! 1 Mr. White and 1 Undercover remaining.");
-      return;
-    }
-
-    if ((p1.role === 'UNDERCOVER' && p2.role === 'CIVILIAN') || (p2.role === 'UNDERCOVER' && p1.role === 'CIVILIAN')) {
+    if (remainingUndercover.length > 0) {
       winningTeam = 'UNDERCOVER';
-      triggerGameOver("Undercover Wins! 1 Undercover and 1 Civilian remaining.");
-      return;
-    }
-
-    if (p1.role === 'CIVILIAN' && p2.role === 'CIVILIAN') {
-      winningTeam = 'CIVILIANS';
-      triggerGameOver("Civilians Win! Only Civilians are left.");
+      triggerGameOver("Undercover Wins!");
       return;
     }
   }
@@ -539,27 +377,13 @@ function checkWinConditions() {
 }
 
 function triggerGameOver(msg) {
-  let title = "Game Over";
-  if (winningTeam === 'CIVILIANS') title = "Civilians Win! 🎉";
-  else if (winningTeam === 'MR_WHITE') title = "Mr. White Wins! 🕵️‍♂️";
-  else if (winningTeam === 'UNDERCOVER') title = "Undercover Wins! 🕵️";
-  else if (winningTeam === 'MR_WHITE_AND_UNDERCOVER') title = "Mr. White & Undercover Win! 🏆";
-
-  document.getElementById('game-over-title').innerText = title;
+  document.getElementById('game-over-title').innerText = winningTeam + " Wins!";
   document.getElementById('game-over-msg').innerText = msg;
   document.getElementById('game-over-modal').classList.add('active');
 }
 
 function goToSummaryPage() {
   document.getElementById('game-over-modal').classList.remove('active');
-  
-  let title = "Game Results";
-  if (winningTeam === 'CIVILIANS') title = "Civilians Win! 🎉";
-  else if (winningTeam === 'MR_WHITE') title = "Mr. White Wins! 🕵️‍♂️";
-  else if (winningTeam === 'UNDERCOVER') title = "Undercover Wins! 🕵️";
-  else if (winningTeam === 'MR_WHITE_AND_UNDERCOVER') title = "Mr. White & Undercover Win! 🏆";
-
-  document.getElementById('summary-title').innerText = title;
   document.getElementById('sum-civilian-word').innerText = currentWordPair.civilian;
   document.getElementById('sum-undercover-word').innerText = currentWordPair.undercover;
 
@@ -580,12 +404,7 @@ function goToSummaryPage() {
   navigateTo('page-7');
 }
 
-function playAgain() {
-  startGame();
-}
-
-function confirmQuitGame() {
-  if (confirm("Quit current game?")) navigateTo('page-1');
-}
+function playAgain() { startGame(); }
+function confirmQuitGame() { if (confirm("Quit current game?")) navigateTo('page-1'); }
 
 document.addEventListener('DOMContentLoaded', initApp);
