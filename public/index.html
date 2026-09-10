@@ -14,7 +14,7 @@
     <div id="page-1" class="page active">
       <div class="top-nav-bar">
         <div class="app-brand"><span class="brand-badge">W</span> MR. WHITE</div>
-        <div class="fresh-pill">965 FRESH</div>
+        <div class="fresh-pill">AI POWERED</div>
       </div>
 
       <div class="hero-card">
@@ -22,11 +22,6 @@
         <h1 class="hero-title">Same room.<br><span class="highlight-text">Different truths.</span></h1>
         <p class="hero-desc">Find the Spy. Expose Mr White. Try not to look suspicious.</p>
         <button class="hero-btn" onclick="openGameSetup()">Start a new game →</button>
-        <div class="hero-stats">
-          <div><strong>3–20</strong><span>PLAYERS</span></div>
-          <div><strong>1,000</strong><span>WORD PAIRS</span></div>
-          <div><strong>10</strong><span>CATEGORIES</span></div>
-        </div>
       </div>
 
       <div class="section-header">
@@ -37,7 +32,7 @@
       <div class="ready-teams-scroll" id="ready-teams-list"></div>
     </div>
 
-    <!-- PAGE 2: SET THE SCENE (GAME SETUP) -->
+    <!-- PAGE 2: GAME SETUP -->
     <div id="page-2" class="page">
       <div class="top-nav-bar">
         <button class="back-circle-btn" onclick="navigateTo('page-1')">‹</button>
@@ -84,7 +79,7 @@
           <span class="step-num">03</span>
           <div>
             <h3 class="step-title">Choose categories</h3>
-            <p class="step-desc">Pick one, a few, or mix them all.</p>
+            <p class="step-desc">14 categories powered by AI for endless non-repeating words.</p>
           </div>
         </div>
 
@@ -93,18 +88,7 @@
           <span class="check-mark" id="all-cat-check">✓</span>
         </button>
 
-        <div class="categories-grid-theme">
-          <button class="cat-card active" data-cat="Animals" onclick="toggleCategory('Animals')"><span>Animals</span><span class="cat-count">100</span></button>
-          <button class="cat-card active" data-cat="Entertainment" onclick="toggleCategory('Entertainment')"><span>Entertainment</span><span class="cat-count">100</span></button>
-          <button class="cat-card active" data-cat="Everyday Life" onclick="toggleCategory('Everyday Life')"><span>Everyday Life</span><span class="cat-count">100</span></button>
-          <button class="cat-card active" data-cat="Food & Drink" onclick="toggleCategory('Food & Drink')"><span>Food & Drink</span><span class="cat-count">100</span></button>
-          <button class="cat-card active" data-cat="Nature" onclick="toggleCategory('Nature')"><span>Nature</span><span class="cat-count">100</span></button>
-          <button class="cat-card active" data-cat="Objects" onclick="toggleCategory('Objects')"><span>Objects</span><span class="cat-count">100</span></button>
-          <button class="cat-card active" data-cat="Places" onclick="toggleCategory('Places')"><span>Places</span><span class="cat-count">100</span></button>
-          <button class="cat-card active" data-cat="Professions" onclick="toggleCategory('Professions')"><span>Professions</span><span class="cat-count">100</span></button>
-          <button class="cat-card active" data-cat="Sports" onclick="toggleCategory('Sports')"><span>Sports</span><span class="cat-count">100</span></button>
-          <button class="cat-card active" data-cat="Travel" onclick="toggleCategory('Travel')"><span>Travel</span><span class="cat-count">100</span></button>
-        </div>
+        <div id="categories-grid" class="categories-grid-theme"></div>
       </div>
 
       <div class="form-section">
@@ -112,7 +96,6 @@
           <span class="step-num">04</span>
           <div>
             <h3 class="step-title">Set hidden roles</h3>
-            <p class="step-desc">At least two Civilians will remain.</p>
           </div>
         </div>
 
@@ -146,18 +129,9 @@
           </div>
         </div>
 
-        <div class="toggle-row-card">
-          <div style="display:flex; gap:10px; align-items:center;">
-            <span class="refresh-icon">🔄</span>
-            <div>
-              <strong>Keep words fresh</strong>
-              <p>Never repeat a previously used word</p>
-            </div>
-          </div>
-          <label class="switch">
-            <input type="checkbox" id="ai-mode-switch" checked onchange="toggleAIMode(this.checked)">
-            <span class="slider round"></span>
-          </label>
+        <div class="input-group" style="margin-top:15px;">
+          <label>GEMINI API KEY (FOR AI WORDS)</label>
+          <input type="password" id="gemini-api-key" placeholder="AIzaSy..." class="theme-input" onchange="saveApiKey(this.value)">
         </div>
       </div>
 
@@ -227,7 +201,7 @@
       </div>
     </div>
 
-    <!-- SECRET WORD REVEAL MODAL -->
+    <!-- MODALS -->
     <div class="modal-overlay" id="card-modal">
       <div class="modal-card">
         <div class="avatar-bubble modal-avatar" id="modal-avatar">?</div>
@@ -238,7 +212,6 @@
       </div>
     </div>
 
-    <!-- ELIMINATE MODAL WITH DYNAMIC BUTTON VISIBILITY -->
     <div class="modal-overlay" id="eliminate-confirm-modal">
       <div class="modal-card">
         <h3 id="elim-player-title">Eliminate Player?</h3>
@@ -250,7 +223,6 @@
       </div>
     </div>
 
-    <!-- RESULT MODAL -->
     <div class="modal-overlay" id="result-modal">
       <div class="modal-card">
         <h2 id="result-role-title">Eliminated!</h2>
@@ -260,7 +232,6 @@
       </div>
     </div>
 
-    <!-- MR WHITE GUESS MODAL -->
     <div class="modal-overlay" id="mrwhite-guess-modal">
       <div class="modal-card">
         <h3>Mr. White Exposed!</h3>
@@ -270,7 +241,6 @@
       </div>
     </div>
 
-    <!-- GAME OVER MODAL -->
     <div class="modal-overlay" id="game-over-modal">
       <div class="modal-card">
         <h2 id="game-over-title">Game Over</h2>

@@ -1,74 +1,33 @@
+// Updated 14 Categories
 const ALL_CATEGORIES_LIST = [
-  "Animals", "Entertainment", "Everyday Life", "Food & Drink", 
-  "Nature", "Objects", "Places", "Professions", "Sports", "Travel"
+  "Every day life", "Tools", "Society & Occupation", "School & Education", 
+  "Work & Office", "Sports and Hobbies", "Media & Entertainment", 
+  "World & Geography", "Food & Culinary", "Around the House", 
+  "Animal", "Object", "Personal Electronic", "Consumer Tech"
 ];
 
-const staticCategoriesPool = [
-  {
-    category: "Animals",
-    pairs: [
-      { civilian: "LION", undercover: "TIGER" }, { civilian: "LEOPARD", undercover: "CHEETAH" },
-      { civilian: "DOLPHIN", undercover: "WHALE" }, { civilian: "EAGLE", undercover: "HAWK" }
-    ]
-  },
-  {
-    category: "Entertainment",
-    pairs: [
-      { civilian: "MOVIE", undercover: "SERIES" }, { civilian: "CONCERT", undercover: "FESTIVAL" }
-    ]
-  },
-  {
-    category: "Everyday Life",
-    pairs: [
-      { civilian: "ALARM", undercover: "TIMER" }, { civilian: "MIRROR", undercover: "WINDOW" }
-    ]
-  },
-  {
-    category: "Food & Drink",
-    pairs: [
-      { civilian: "COFFEE", undercover: "TEA" }, { civilian: "APPLE", undercover: "PEAR" }
-    ]
-  },
-  {
-    category: "Nature",
-    pairs: [
-      { civilian: "RIVER", undercover: "STREAM" }, { civilian: "OCEAN", undercover: "SEA" }
-    ]
-  },
-  {
-    category: "Objects",
-    pairs: [
-      { civilian: "PENCIL", undercover: "PEN" }, { civilian: "CHAIR", undercover: "STOOL" }
-    ]
-  },
-  {
-    category: "Places",
-    pairs: [
-      { civilian: "CASTLE", undercover: "PALACE" }, { civilian: "HOTEL", undercover: "MOTEL" }
-    ]
-  },
-  {
-    category: "Professions",
-    pairs: [
-      { civilian: "DOCTOR", undercover: "NURSE" }, { civilian: "PILOT", undercover: "CAPTAIN" }
-    ]
-  },
-  {
-    category: "Sports",
-    pairs: [
-      { civilian: "FOOTBALL", undercover: "RUGBY" }, { civilian: "TENNIS", undercover: "BADMINTON" }
-    ]
-  },
-  {
-    category: "Travel",
-    pairs: [
-      { civilian: "PASSPORT", undercover: "VISA" }, { civilian: "SUITCASE", undercover: "DUFFEL" }
-    ]
-  }
-];
+// Fallback pool in case Gemini API Key is missing
+const fallbackPairs = {
+  "Every day life": [{ civilian: "ALARM", undercover: "TIMER" }],
+  "Tools": [{ civilian: "HAMMER", undercover: "MALLET" }],
+  "Society & Occupation": [{ civilian: "DOCTOR", undercover: "NURSE" }],
+  "School & Education": [{ civilian: "PENCIL", undercover: "PEN" }],
+  "Work & Office": [{ civilian: "LAPTOP", undercover: "TABLET" }],
+  "Sports and Hobbies": [{ civilian: "FOOTBALL", undercover: "RUGBY" }],
+  "Media & Entertainment": [{ civilian: "MOVIE", undercover: "SERIES" }],
+  "World & Geography": [{ civilian: "OCEAN", undercover: "SEA" }],
+  "Food & Culinary": [{ civilian: "COFFEE", undercover: "TEA" }],
+  "Around the House": [{ civilian: "SOFA", undercover: "COUCH" }],
+  "Animal": [{ civilian: "LION", undercover: "TIGER" }],
+  "Object": [{ civilian: "CHAIR", undercover: "STOOL" }],
+  "Personal Electronic": [{ civilian: "PHONE", undercover: "SMARTWATCH" }],
+  "Consumer Tech": [{ civilian: "DRONE", undercover: "CAMERA" }]
+};
 
 let selectedCategories = [...ALL_CATEGORIES_LIST];
 let isAIModeEnabled = true;
+let geminiApiKey = "";
+let usedWordsHistory = [];
 let lastMrWhitePlayerNames = [];
 
 let groups = [
@@ -101,17 +60,29 @@ function initApp() {
 function saveToStorage() {
   localStorage.setItem('uw_groups', JSON.stringify(groups));
   localStorage.setItem('uw_last_white', JSON.stringify(lastMrWhitePlayerNames));
+  localStorage.setItem('uw_used_words', JSON.stringify(usedWordsHistory));
+  localStorage.setItem('uw_gemini_key', geminiApiKey);
 }
 
 function loadFromStorage() {
-  const stored = localStorage.getItem('uw_groups');
-  if (stored) {
-    try { groups = JSON.parse(stored); } catch(e){}
-  }
+  const storedGroups = localStorage.getItem('uw_groups');
+  if (storedGroups) { try { groups = JSON.parse(storedGroups); } catch(e){} }
+
   const storedWhite = localStorage.getItem('uw_last_white');
-  if (storedWhite) {
-    try { lastMrWhitePlayerNames = JSON.parse(storedWhite); } catch(e){}
+  if (storedWhite) { try { lastMrWhitePlayerNames = JSON.parse(storedWhite); } catch(e){} }
+
+  const storedWords = localStorage.getItem('uw_used_words');
+  if (storedWords) { try { usedWordsHistory = JSON.parse(storedWords); } catch(e){} }
+
+  geminiApiKey = localStorage.getItem('uw_gemini_key') || "";
+  if (document.getElementById('gemini-api-key')) {
+    document.getElementById('gemini-api-key').value = geminiApiKey;
   }
+}
+
+function saveApiKey(val) {
+  geminiApiKey = val.trim();
+  saveToStorage();
 }
 
 function navigateTo(pageId) {
@@ -263,26 +234,62 @@ function renderCategoriesUI() {
     allCheck.style.display = "none";
   }
 
-  document.querySelectorAll('.cat-card').forEach(card => {
-    const cat = card.getAttribute('data-cat');
-    if (selectedCategories.includes(cat)) {
-      card.classList.add('active');
-    } else {
-      card.classList.remove('active');
-    }
+  const container = document.getElementById('categories-grid');
+  container.innerHTML = '';
+  ALL_CATEGORIES_LIST.forEach(cat => {
+    const isSelected = selectedCategories.includes(cat);
+    container.innerHTML += `
+      <button class="cat-card ${isSelected ? 'active' : ''}" onclick="toggleCategory('${cat}')">
+        <span>${cat}</span>
+      </button>
+    `;
   });
 }
 
 function toggleAIMode(enabled) { isAIModeEnabled = enabled; }
 
+// Fetch fresh, non-repeating words via Gemini API
 async function getNextWordPair() {
   if (selectedCategories.length === 0) {
     selectedCategories = [...ALL_CATEGORIES_LIST];
     renderCategoriesUI();
   }
-  const pool = staticCategoriesPool.filter(c => selectedCategories.includes(c.category));
-  const cat = pool[Math.floor(Math.random() * pool.length)];
-  const pair = cat.pairs[Math.floor(Math.random() * cat.pairs.length)];
+
+  const chosenCat = selectedCategories[Math.floor(Math.random() * selectedCategories.length)];
+
+  if (geminiApiKey) {
+    try {
+      const prompt = `Generate 1 unique pair of closely related words for an "Undercover" word game in JSON format.
+      Category: "${chosenCat}".
+      Do NOT use any of these previously used words: ${JSON.stringify(usedWordsHistory.slice(-100))}.
+      Output MUST be valid raw JSON only without markdown or extra text: {"civilian": "WORD1", "undercover": "WORD2"}`;
+
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }]
+        })
+      });
+
+      const data = await res.json();
+      const rawText = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
+      const parsed = JSON.parse(rawText);
+
+      usedWordsHistory.push(parsed.civilian.toUpperCase(), parsed.undercover.toUpperCase());
+      saveToStorage();
+
+      return { civilian: parsed.civilian.toUpperCase(), undercover: parsed.undercover.toUpperCase() };
+    } catch (e) {
+      console.warn("Gemini API call failed or missing, using local fallback:", e);
+    }
+  }
+
+  // Fallback when API key is not present or API call fails
+  const pool = fallbackPairs[chosenCat] || [{ civilian: "OBJECT", undercover: "ITEM" }];
+  const pair = pool[Math.floor(Math.random() * pool.length)];
+  usedWordsHistory.push(pair.civilian, pair.undercover);
+  saveToStorage();
   return { civilian: pair.civilian, undercover: pair.undercover };
 }
 
@@ -311,7 +318,6 @@ async function startGame() {
   let playersPool = [...currentSuspects].sort(() => Math.random() - 0.5);
   currentWordPair = await getNextWordPair();
 
-  // Rule #7: Ensure Mr. White sequence/player changes every game
   let eligibleMrWhites = playersPool.filter(p => !lastMrWhitePlayerNames.includes(p));
   if (eligibleMrWhites.length < mrWhiteCount) eligibleMrWhites = playersPool;
   eligibleMrWhites.sort(() => Math.random() - 0.5);
@@ -338,7 +344,6 @@ async function startGame() {
     };
   });
 
-  // Rule #7: Ensure Mr. White is not the first card picker
   gameCards = [...activePlayers];
   if (gameCards.length > 1 && gameCards[0].role === 'MR_WHITE') {
     let nonWhiteIdx = gameCards.findIndex(p => p.role !== 'MR_WHITE');
@@ -434,7 +439,6 @@ function toggleVoteMode() {
   renderBoardUI();
 }
 
-// Rule #6: Dynamic Elimination Option Rendering
 function openEliminateModal(name) {
   playerToEliminate = activePlayers.find(p => p.name === name);
   document.getElementById('elim-player-title').innerText = `Eliminate ${playerToEliminate.name}?`;
@@ -443,30 +447,23 @@ function openEliminateModal(name) {
   const mwLeft = remaining.filter(p => p.role === 'MR_WHITE').length;
   const spyLeft = remaining.filter(p => p.role === 'UNDERCOVER').length;
 
-  const btnMw = document.getElementById('btn-elim-mrwhite');
-  const btnSpy = document.getElementById('btn-elim-undercover');
-
-  btnMw.style.display = mwLeft > 0 ? 'block' : 'none';
-  btnSpy.style.display = spyLeft > 0 ? 'block' : 'none';
+  document.getElementById('btn-elim-mrwhite').style.display = mwLeft > 0 ? 'block' : 'none';
+  document.getElementById('btn-elim-undercover').style.display = spyLeft > 0 ? 'block' : 'none';
 
   document.getElementById('eliminate-confirm-modal').classList.add('active');
 }
 
-// Rules #1, #2, #3: Check True Role upon Elimination
 function eliminateAsRole(votedOption) {
   document.getElementById('eliminate-confirm-modal').classList.remove('active');
 
-  // Rule #1: If the eliminated player is ACTUALLY Mr. White, prompt for the word guess
   if (playerToEliminate.role === 'MR_WHITE') {
     document.getElementById('mrwhite-word-input').value = '';
     document.getElementById('mrwhite-guess-modal').classList.add('active');
   } else {
-    // Rules #2 & #3: Undercover or Civilian eliminated instantly
     processEliminationResult();
   }
 }
 
-// Rule #1: Mr. White Guess Evaluation
 function submitMrWhiteGuess() {
   const guess = document.getElementById('mrwhite-word-input').value.trim().toUpperCase();
   document.getElementById('mrwhite-guess-modal').classList.remove('active');
@@ -497,46 +494,39 @@ function handleResultModalOk() {
   checkWinConditions();
 }
 
-// Rules #4 & #5: Complete Winning Conditions Check
 function checkWinConditions() {
   const remaining = activePlayers.filter(p => !p.eliminated);
   const remainingMrWhite = remaining.filter(p => p.role === 'MR_WHITE');
   const remainingUndercover = remaining.filter(p => p.role === 'UNDERCOVER');
 
-  // Rule #4: All Mr. Whites and Undercovers eliminated -> Civilians Win
   if (remainingMrWhite.length === 0 && remainingUndercover.length === 0) {
     winningTeam = 'CIVILIANS';
     triggerGameOver("Civilians Win! All Mr. Whites and Undercovers have been eliminated.");
     return;
   }
 
-  // Rule #5: Exactly 2 players remaining end-game logic
   if (remaining.length === 2) {
     const p1 = remaining[0];
     const p2 = remaining[1];
 
-    // 5(A): 1 Mr. White & 1 Civilian -> Mr. White Wins
     if ((p1.role === 'MR_WHITE' && p2.role === 'CIVILIAN') || (p2.role === 'MR_WHITE' && p1.role === 'CIVILIAN')) {
       winningTeam = 'MR_WHITE';
       triggerGameOver("Mr. White Wins! 1 Mr. White and 1 Civilian remaining.");
       return;
     }
 
-    // 5(B): 1 Mr. White & 1 Undercover -> Both Win
     if ((p1.role === 'MR_WHITE' && p2.role === 'UNDERCOVER') || (p2.role === 'MR_WHITE' && p1.role === 'UNDERCOVER')) {
       winningTeam = 'MR_WHITE_AND_UNDERCOVER';
       triggerGameOver("Mr. White & Undercover Win! 1 Mr. White and 1 Undercover remaining.");
       return;
     }
 
-    // 5(C): 1 Undercover & 1 Civilian -> Undercover Wins
     if ((p1.role === 'UNDERCOVER' && p2.role === 'CIVILIAN') || (p2.role === 'UNDERCOVER' && p1.role === 'CIVILIAN')) {
       winningTeam = 'UNDERCOVER';
       triggerGameOver("Undercover Wins! 1 Undercover and 1 Civilian remaining.");
       return;
     }
 
-    // 5(D): Both Civilians -> Civilians Win
     if (p1.role === 'CIVILIAN' && p2.role === 'CIVILIAN') {
       winningTeam = 'CIVILIANS';
       triggerGameOver("Civilians Win! Only Civilians are left.");
