@@ -311,6 +311,7 @@ async function startGame() {
   let playersPool = [...currentSuspects].sort(() => Math.random() - 0.5);
   currentWordPair = await getNextWordPair();
 
+  // Rule #7: Ensure Mr. White sequence/player changes every game
   let eligibleMrWhites = playersPool.filter(p => !lastMrWhitePlayerNames.includes(p));
   if (eligibleMrWhites.length < mrWhiteCount) eligibleMrWhites = playersPool;
   eligibleMrWhites.sort(() => Math.random() - 0.5);
@@ -337,6 +338,7 @@ async function startGame() {
     };
   });
 
+  // Rule #7: Ensure Mr. White is not the first card picker
   gameCards = [...activePlayers];
   if (gameCards.length > 1 && gameCards[0].role === 'MR_WHITE') {
     let nonWhiteIdx = gameCards.findIndex(p => p.role !== 'MR_WHITE');
@@ -432,29 +434,39 @@ function toggleVoteMode() {
   renderBoardUI();
 }
 
+// Rule #6: Dynamic Elimination Option Rendering
 function openEliminateModal(name) {
   playerToEliminate = activePlayers.find(p => p.name === name);
   document.getElementById('elim-player-title').innerText = `Eliminate ${playerToEliminate.name}?`;
+
+  const remaining = activePlayers.filter(p => !p.eliminated);
+  const mwLeft = remaining.filter(p => p.role === 'MR_WHITE').length;
+  const spyLeft = remaining.filter(p => p.role === 'UNDERCOVER').length;
+
+  const btnMw = document.getElementById('btn-elim-mrwhite');
+  const btnSpy = document.getElementById('btn-elim-undercover');
+
+  btnMw.style.display = mwLeft > 0 ? 'block' : 'none';
+  btnSpy.style.display = spyLeft > 0 ? 'block' : 'none';
+
   document.getElementById('eliminate-confirm-modal').classList.add('active');
 }
 
-function eliminateAsRole(targetRole) {
+// Rules #1, #2, #3: Check True Role upon Elimination
+function eliminateAsRole(votedOption) {
   document.getElementById('eliminate-confirm-modal').classList.remove('active');
 
-  if (targetRole === 'MR_WHITE') {
-    // If guessed as Mr. White, verify if true role is actually Mr. White
-    if (playerToEliminate.role === 'MR_WHITE') {
-      document.getElementById('mrwhite-word-input').value = '';
-      document.getElementById('mrwhite-guess-modal').classList.add('active');
-    } else {
-      processEliminationResult();
-    }
+  // Rule #1: If the eliminated player is ACTUALLY Mr. White, prompt for the word guess
+  if (playerToEliminate.role === 'MR_WHITE') {
+    document.getElementById('mrwhite-word-input').value = '';
+    document.getElementById('mrwhite-guess-modal').classList.add('active');
   } else {
-    // Eliminate as Undercover (or standard vote)
+    // Rules #2 & #3: Undercover or Civilian eliminated instantly
     processEliminationResult();
   }
 }
 
+// Rule #1: Mr. White Guess Evaluation
 function submitMrWhiteGuess() {
   const guess = document.getElementById('mrwhite-word-input').value.trim().toUpperCase();
   document.getElementById('mrwhite-guess-modal').classList.remove('active');
@@ -485,39 +497,46 @@ function handleResultModalOk() {
   checkWinConditions();
 }
 
+// Rules #4 & #5: Complete Winning Conditions Check
 function checkWinConditions() {
   const remaining = activePlayers.filter(p => !p.eliminated);
   const remainingMrWhite = remaining.filter(p => p.role === 'MR_WHITE');
   const remainingUndercover = remaining.filter(p => p.role === 'UNDERCOVER');
 
+  // Rule #4: All Mr. Whites and Undercovers eliminated -> Civilians Win
   if (remainingMrWhite.length === 0 && remainingUndercover.length === 0) {
     winningTeam = 'CIVILIANS';
     triggerGameOver("Civilians Win! All Mr. Whites and Undercovers have been eliminated.");
     return;
   }
 
+  // Rule #5: Exactly 2 players remaining end-game logic
   if (remaining.length === 2) {
     const p1 = remaining[0];
     const p2 = remaining[1];
 
+    // 5(A): 1 Mr. White & 1 Civilian -> Mr. White Wins
     if ((p1.role === 'MR_WHITE' && p2.role === 'CIVILIAN') || (p2.role === 'MR_WHITE' && p1.role === 'CIVILIAN')) {
       winningTeam = 'MR_WHITE';
       triggerGameOver("Mr. White Wins! 1 Mr. White and 1 Civilian remaining.");
       return;
     }
 
+    // 5(B): 1 Mr. White & 1 Undercover -> Both Win
     if ((p1.role === 'MR_WHITE' && p2.role === 'UNDERCOVER') || (p2.role === 'MR_WHITE' && p1.role === 'UNDERCOVER')) {
       winningTeam = 'MR_WHITE_AND_UNDERCOVER';
       triggerGameOver("Mr. White & Undercover Win! 1 Mr. White and 1 Undercover remaining.");
       return;
     }
 
+    // 5(C): 1 Undercover & 1 Civilian -> Undercover Wins
     if ((p1.role === 'UNDERCOVER' && p2.role === 'CIVILIAN') || (p2.role === 'UNDERCOVER' && p1.role === 'CIVILIAN')) {
       winningTeam = 'UNDERCOVER';
       triggerGameOver("Undercover Wins! 1 Undercover and 1 Civilian remaining.");
       return;
     }
 
+    // 5(D): Both Civilians -> Civilians Win
     if (p1.role === 'CIVILIAN' && p2.role === 'CIVILIAN') {
       winningTeam = 'CIVILIANS';
       triggerGameOver("Civilians Win! Only Civilians are left.");
