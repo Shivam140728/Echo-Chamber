@@ -598,8 +598,25 @@ const ALL_CATEGORIES_LIST = [
   "Animal", "Object", "Personal Electronic", "Consumer Tech"
 ];
 
+// Mapping categories to starter topics for the free Datamuse API
+const CATEGORY_TOPICS = {
+  "Every day life": ["daily", "lifestyle", "routine"],
+  "Tools": ["construction", "carpentry", "hardware"],
+  "Society & Occupation": ["job", "profession", "career"],
+  "School & Education": ["classroom", "study", "education"],
+  "Work & Office": ["business", "office", "corporate"],
+  "Sports and Hobbies": ["recreation", "athletics", "hobby"],
+  "Media & Entertainment": ["cinema", "music", "television"],
+  "World & Geography": ["nature", "geography", "earth"],
+  "Food & Culinary": ["cooking", "kitchen", "culinary"],
+  "Around the House": ["furniture", "household", "home"],
+  "Animal": ["wildlife", "mammal", "animal"],
+  "Object": ["thing", "item", "structure"],
+  "Personal Electronic": ["gadget", "device", "mobile"],
+  "Consumer Tech": ["technology", "computer", "electronics"]
+};
+
 let selectedCategories = [...ALL_CATEGORIES_LIST];
-let geminiApiKey = "";
 let lastMrWhitePlayerNames = [];
 
 let groups = [
@@ -630,7 +647,6 @@ function initApp() {
 function saveToStorage() {
   localStorage.setItem('uw_groups', JSON.stringify(groups));
   localStorage.setItem('uw_last_white', JSON.stringify(lastMrWhitePlayerNames));
-  localStorage.setItem('uw_gemini_key', geminiApiKey);
 }
 
 function loadFromStorage() {
@@ -639,17 +655,6 @@ function loadFromStorage() {
 
   const storedWhite = localStorage.getItem('uw_last_white');
   if (storedWhite) { try { lastMrWhitePlayerNames = JSON.parse(storedWhite); } catch(e){} }
-
-  geminiApiKey = localStorage.getItem('uw_gemini_key') || "";
-  const apiKeyInput = document.getElementById('gemini-api-key');
-  if (apiKeyInput) {
-    apiKeyInput.value = geminiApiKey;
-  }
-}
-
-function saveApiKey(val) {
-  geminiApiKey = val.trim();
-  saveToStorage();
 }
 
 function navigateTo(pageId) {
@@ -772,15 +777,6 @@ function updateSetupUI() {
   if (summaryText) summaryText.innerText = `${currentSuspects.length} players · ${undercoverCount} Spy · ${mrWhiteCount} Mr White`;
 }
 
-function toggleAllCategories() {
-  if (selectedCategories.length === ALL_CATEGORIES_LIST.length) {
-    selectedCategories = [];
-  } else {
-    selectedCategories = [...ALL_CATEGORIES_LIST];
-  }
-  renderCategoriesUI();
-}
-
 function toggleCategory(catName) {
   if (selectedCategories.includes(catName)) {
     selectedCategories = selectedCategories.filter(c => c !== catName);
@@ -804,44 +800,40 @@ function renderCategoriesUI() {
   });
 }
 
-// Fetch dynamic online words via Gemini API for every game round
+// Fetch dynamic words using the Free Datamuse API (No API Key Required)
 async function fetchOnlineWordPair() {
-  if (!geminiApiKey) {
-    alert("Please enter a valid Gemini API Key in the setup screen to fetch online AI words.");
-    throw new Error("Missing API Key");
-  }
-
   if (selectedCategories.length === 0) {
     selectedCategories = [...ALL_CATEGORIES_LIST];
     renderCategoriesUI();
   }
 
-  const randomCategory = selectedCategories[Math.floor(Math.random() * selectedCategories.length)];
+  const category = selectedCategories[Math.floor(Math.random() * selectedCategories.length)];
+  const topics = CATEGORY_TOPICS[category] || ["object", "item"];
+  const topic = topics[Math.floor(Math.random() * topics.length)];
 
-  const prompt = `Generate 1 unique pair of closely related secret words for an "Undercover" party game.
-  Category: "${randomCategory}".
-  Requirements:
-  - Return ONLY valid raw JSON format without markdown code blocks: {"civilian": "WORD1", "undercover": "WORD2"}`;
+  // Fetch related words from Datamuse API
+  const response = await fetch(`https://api.datamuse.com/words?topics=${topic}&max=30`);
+  if (!response.ok) throw new Error("Datamuse API error");
 
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-  });
+  const data = await response.json();
+  const validWords = data.filter(item => item.word.length >= 3 && !item.word.includes(' '));
 
-  if (!res.ok) {
-    alert("AI Word Fetch Failed. Please check your Gemini API key.");
-    throw new Error(`API error: ${res.status}`);
+  if (validWords.length < 2) {
+    return { civilian: "PHONE", undercover: "TABLET", category };
   }
 
-  const data = await res.json();
-  const rawText = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
-  const parsed = JSON.parse(rawText);
+  // Select two distinct words from the API payload
+  const randIndex1 = Math.floor(Math.random() * validWords.length);
+  let randIndex2 = Math.floor(Math.random() * validWords.length);
+  
+  while (randIndex1 === randIndex2) {
+    randIndex2 = Math.floor(Math.random() * validWords.length);
+  }
 
   return {
-    civilian: parsed.civilian.toUpperCase(),
-    undercover: parsed.undercover.toUpperCase(),
-    category: randomCategory
+    civilian: validWords[randIndex1].word.toUpperCase(),
+    undercover: validWords[randIndex2].word.toUpperCase(),
+    category
   };
 }
 
@@ -870,8 +862,8 @@ async function startGame() {
   try {
     currentWordPair = await fetchOnlineWordPair();
   } catch (e) {
-    console.error("Could not fetch online word pair:", e);
-    return;
+    console.error("Failed to fetch words online:", e);
+    currentWordPair = { civilian: "SUN", undercover: "MOON", category: "General" };
   }
 
   let playersPool = [...currentSuspects].sort(() => Math.random() - 0.5);
