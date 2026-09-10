@@ -435,22 +435,14 @@ function toggleVoteMode() {
 function openEliminateModal(name) {
   playerToEliminate = activePlayers.find(p => p.name === name);
   document.getElementById('elim-player-title').innerText = `Eliminate ${playerToEliminate.name}?`;
-
-  const container = document.getElementById('elimination-options-container');
-  container.innerHTML = `
-    <button class="dark-primary-btn" onclick="confirmEliminationOption('MR_WHITE')">Eliminate as Mr. White 🕵️‍♂️</button>
-    <button class="dark-primary-btn" onclick="confirmEliminationOption('UNDERCOVER')">Eliminate as Spy 🕵️</button>
-  `;
-
   document.getElementById('eliminate-confirm-modal').classList.add('active');
 }
 
-// Fixed option handler
-function confirmEliminationOption(chosenOption) {
+function eliminateAsRole(targetRole) {
   document.getElementById('eliminate-confirm-modal').classList.remove('active');
 
-  if (chosenOption === 'MR_WHITE') {
-    // Only grant the word guess window if they actually are Mr. White
+  if (targetRole === 'MR_WHITE') {
+    // If guessed as Mr. White, verify if true role is actually Mr. White
     if (playerToEliminate.role === 'MR_WHITE') {
       document.getElementById('mrwhite-word-input').value = '';
       document.getElementById('mrwhite-guess-modal').classList.add('active');
@@ -458,7 +450,7 @@ function confirmEliminationOption(chosenOption) {
       processEliminationResult();
     }
   } else {
-    // Eliminating as Undercover/Spy (or standard elimination)
+    // Eliminate as Undercover (or standard vote)
     processEliminationResult();
   }
 }

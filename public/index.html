@@ -238,12 +238,15 @@
       </div>
     </div>
 
-    <!-- ELIMINATE MODAL -->
+    <!-- ELIMINATE MODAL WITH 2 DEDICATED BUTTONS -->
     <div class="modal-overlay" id="eliminate-confirm-modal">
       <div class="modal-card">
         <h3 id="elim-player-title">Eliminate Player?</h3>
-        <p style="font-size:12px; color:#666; margin-bottom:15px;">Confirm elimination of this player.</p>
-        <button class="dark-primary-btn" onclick="confirmEliminationChoice()">Confirm Elimination 🎯</button>
+        <p style="font-size: 12px; color: #888; margin-bottom: 15px;">Choose elimination role:</p>
+        <div class="modal-actions-row flex-column" style="display: flex; flex-direction: column; gap: 10px; width: 100%;">
+          <button class="dark-primary-btn" style="background: #22c55e;" onclick="eliminateAsRole('MR_WHITE')">Eliminate as Mr. White 🕵️‍♂️</button>
+          <button class="dark-primary-btn" style="background: #a855f7;" onclick="eliminateAsRole('UNDERCOVER')">Eliminate as Undercover 🕵️</button>
+        </div>
       </div>
     </div>
 
